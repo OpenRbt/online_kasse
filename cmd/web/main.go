@@ -1,13 +1,17 @@
 package main
 
 import (
-	"github.com/gramework/gramework"
+	//"github.com/gramework/gramework"
+	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 )
 
 func main() {
-	app := gramework.New()
+	//server := gramework.New()
 
-	app.GET("/", "hello, grameworld")
+	//server.GET("/", "hello, grameworld")
 
-	app.ListenAndServe()
+	printer := app.NewWebApp()
+	printer.printReceipt(50.0, true)
+
+	//server.ListenAndServe()
 }
