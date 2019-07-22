@@ -2,7 +2,6 @@ package main
 
 import (
 	//"github.com/gramework/gramework"
-	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 )
 
 func main() {
