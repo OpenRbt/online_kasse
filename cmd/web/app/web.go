@@ -3,6 +3,7 @@ package app
 import "github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
 import "errors"
 import "strconv"
+import "fmt"
 
 var (
 	ErrCannotConnect = errors.New("Connection to KKT failed")
@@ -67,33 +68,49 @@ func (w *WebApp) registerReceipt(price float64, isBankCard bool) {
 func (w *WebApp) PrintReceipt(price float64, isBankCard bool) error {
 	fptr := fptr10.New()
 
-	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_KAZNACHEY_FA))
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_PORT, strconv.Itoa(fptr10.LIBFPTR_PORT_USB))
 	fptr.ApplySingleSettings()
+	fmt.Println(fptr.ErrorCode())
 
 	fptr.Open()
 	if !fptr.IsOpened() {
 		return ErrCannotConnect
 	}
-	
+	fmt.Println("Port opened")
+
 	fptr.SetParam(1021, "Кассир Иванов И.")
 	fptr.SetParam(1203, "123456789047")
 	fptr.OperatorLogin()	
-
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля");
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, price);
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1);
+	fmt.Println("Operator logged in")
+	
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
+	fptr.Report()
+	
+	fptr.OpenShift()
+	
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE, fptr10.LIBFPTR_RT_SELL)
+        fptr.OpenReceipt()
+	fmt.Println(fptr.ErrorCode())
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, price)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO);
+	fptr.Registration()
+	fmt.Println(fptr.ErrorCode())
 
 	if isBankCard {
-		w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY);
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY);
 	} else {
-		w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH);
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH);
 	}
+	fmt.Println("Bank card done")
 
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, price);
-    fptr.Registration();
 	fptr.Payment();
+	fmt.Println("Payment done")
+	fptr.CloseReceipt()
+	fptr.CheckDocumentClosed()
 
 	/*
 	w.configureKKT()
