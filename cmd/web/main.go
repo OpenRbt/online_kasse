@@ -2,6 +2,7 @@ package main
 
 import (
 	//"github.com/gramework/gramework"
+	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 )
 
 func main() {
@@ -9,8 +10,8 @@ func main() {
 
 	//server.GET("/", "hello, grameworld")
 
-	printer := app.NewWebApp()
-	printer.printReceipt(50.0, true)
+	printer, _ := app.NewWebApp()
+	printer.PrintReceipt(50.0, true)
 
 	//server.ListenAndServe()
 }

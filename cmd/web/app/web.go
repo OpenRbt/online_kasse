@@ -1,14 +1,20 @@
 package app
 
-import "atol.ru/drivers10/fptr"
+import "github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
 import "errors"
+import "strconv"
 
 var (
-	ErrCannotConnect = errors.new("Connection to KKT failed")
+	ErrCannotConnect = errors.New("Connection to KKT failed")
 )
 
 type WebApp struct {
-	fptr IFptr
+	fptr *fptr10.IFptr
+}
+
+type CashRegisterDevice interface{
+	PingDevice() error
+	PrintReceipt() error
 }
 
 type Dal struct {
@@ -21,7 +27,7 @@ func (w *WebApp) configureKKT() {
 	w.fptr.ApplySingleSettings()
 }
 
-func (w *WebApp) operatorLogin(string name, string id) {
+func (w *WebApp) operatorLogin(name string, id string) {
 	w.fptr.SetParam(1021, "Кассир Иванов И.")
 	w.fptr.SetParam(1203, "123456789047")
 	w.fptr.OperatorLogin()	
@@ -42,29 +48,57 @@ func (w *WebApp) pingKKT() bool {
 }
 
 func (w *WebApp) registerReceipt(price float64, isBankCard bool) {
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля");
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, price);
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1);
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, LIBFPTR_TAX_NO);
+	w.fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля");
+	w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, price);
+	w.fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1);
+	w.fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO);
 
-    if isBankCard == false {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, LIBFPTR_PT_CASH);
-	}
-    else {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, LIBFPTR_PT_ELECTRONICALLY);
+	if isBankCard {
+		w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY);
+	} else {
+		w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH);
 	}
 
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, price);
-    fptr.Registration();
-	fptr.Payment();
+	w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, price);
+    w.fptr.Registration();
+	w.fptr.Payment();
 }
 
 func (w *WebApp) PrintReceipt(price float64, isBankCard bool) error {
 	fptr := fptr10.New()
 
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_KAZNACHEY_FA))
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_PORT, strconv.Itoa(fptr10.LIBFPTR_PORT_USB))
+	fptr.ApplySingleSettings()
+
+	fptr.Open()
+	if !fptr.IsOpened() {
+		return ErrCannotConnect
+	}
+	
+	fptr.SetParam(1021, "Кассир Иванов И.")
+	fptr.SetParam(1203, "123456789047")
+	fptr.OperatorLogin()	
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля");
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, price);
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1);
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO);
+
+	if isBankCard {
+		w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY);
+	} else {
+		w.fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH);
+	}
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, price);
+    fptr.Registration();
+	fptr.Payment();
+
+	/*
 	w.configureKKT()
 
-	isAvailable := pingKKT()
+	isAvailable := w.pingKKT()
 	if isAvailable == false {
 		return ErrCannotConnect
 	}
@@ -73,8 +107,9 @@ func (w *WebApp) PrintReceipt(price float64, isBankCard bool) error {
 	w.operatorLogin("Ivan Pupkin", "123456789")
 
 	w.registerReceipt(price, isBankCard)
-
+*/
 	fptr.Close()
+	
 	fptr.Destroy()
 
 	return nil
