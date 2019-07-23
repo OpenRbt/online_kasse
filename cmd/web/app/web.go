@@ -3,7 +3,6 @@ package app
 import "github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
 import "errors"
 import "strconv"
-import "fmt"
 
 var (
 	ErrCannotConnect = errors.New("Connection to KKT failed")
@@ -107,19 +106,6 @@ func (w *WebApp) PrintReceipt(price float64, isBankCard bool) error {
 	fptr.CloseReceipt()
 	fptr.CheckDocumentClosed()
 
-	/*
-	w.configureKKT()
-
-	isAvailable := w.pingKKT()
-	if isAvailable == false {
-		return ErrCannotConnect
-	}
-
-	fptr.Open()
-	w.operatorLogin("Ivan Pupkin", "123456789")
-
-	w.registerReceipt(price, isBankCard)
-*/
 	fptr.Close()
 	
 	fptr.Destroy()
