@@ -1,17 +1,20 @@
 package app
 
 import "github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
+
 import "errors"
 import "strconv"
 
 var (
+	// ErrCannotConnect uses to describe Cash Register Device failures
 	ErrCannotConnect = errors.New("Connection to Cash Register Device failed")
 )
 
+// Application is communicating with Cash Register Device
 type Application struct {
-
 }
 
+// PingDevice checks connection to the Cash Register Device
 func (a *Application) PingDevice() error {
 	// add mutex
 	fptr := fptr10.New()
@@ -32,6 +35,7 @@ func (a *Application) PingDevice() error {
 	return nil
 }
 
+// PrintReceipt is sending receipt data to Cash Register Device
 func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
 	// add mutex
 	fptr := fptr10.New()
@@ -44,52 +48,51 @@ func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
 	if !fptr.IsOpened() {
 		return ErrCannotConnect
 	}
-	
+
 	fptr.SetParam(1021, "Кассир Иванов И.")
 	fptr.SetParam(1203, "123456789047")
-	fptr.OperatorLogin()	
-	
+	fptr.OperatorLogin()
+
 	//fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
 	//fptr.Report()
-	
+
 	fptr.OpenShift()
-	
+
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE, fptr10.LIBFPTR_RT_SELL)
 	fptr.OpenReceipt()
-	
+
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, price)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO);
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO)
 	fptr.Registration()
-	
+
 	if isBankCard {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY);
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY)
 	} else {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH);
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
 	}
-	
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, price);
-	fptr.Payment();
-	
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, price)
+	fptr.Payment()
+
 	fptr.CloseReceipt()
 	fptr.CheckDocumentClosed()
 
 	fptr.Close()
-	
+
 	fptr.Destroy()
 
 	return nil
-} 
-
-func NewApplication () (*Application, error) {
-	res := &Application{}
-	return res, nil	
 }
 
+// NewApplication constructs Application
+func NewApplication() (*Application, error) {
+	res := &Application{}
+	return res, nil
+}
+
+// Start initializes receipt processing goroutine
 func (a *Application) Start() {
 	// TO DO: start goroutine with data processing from DB
 }
-
-
-

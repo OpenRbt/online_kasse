@@ -2,23 +2,24 @@ package main
 
 import (
 	"fmt"
-	"flag"
+
 	"github.com/DiaElectronics/online_kasse/cmd/web/api"
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 )
 
 func main() {
 
-	application, err := NewApplication()
+	application, err := app.NewApplication()
+
 	if err != nil {
 		fmt.Println("Application start failure - program stopped")
 		return
 	}
 	// Should start in API
-	application.Start()	
+	application.Start()
 
 	// TO DO: transfer application to API
-	server, err := NewWebServer()
+	server, err := api.NewWebServer()
 	if err != nil {
 		fmt.Println("Server start failure - program stopped")
 		return
