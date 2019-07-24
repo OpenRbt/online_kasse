@@ -1,22 +1,16 @@
 package api
 
-import "github.com/valyala/fasthttp"
-import "github.com/buaazp/fasthttprouter"
+import (
+	"github.com/valyala/fasthttp"
+	"github.com/buaazp/fasthttprouter"
+	"github.com/DiaElectronics/online_kasse/cmd/web/app"
+	"github.com/powerman/structlog"
+)
 
 var log *structlog.Logger
 
 type WebServer struct {
 
-}
-
-type Receipt struct {
-	Price float64
-	IsBankCard bool
-}
-
-func NewReceipt () (*Receipt, error) {
-	res := &Receipt{}
-	return res, nil	
 }
 
 func (server *WebServer) SubmitReceipt(ctx *fasthttp.RequestCtx) {
@@ -44,17 +38,21 @@ func (server *WebServer) SubmitReceipt(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	printer, err := app.NewWebApp()
+	// TO DO: send receipt to APPLICATION
+
+	/*
+	printer, err := app.KaznacheyFA()
 	if err != nil {
 		log.Fatalf("Error while initializing a cash control device %v", err)
 	}
 
 	printer.PrintReceipt(price, isBankCard)
 	fmt.Println("Receipt with", price_str, "RUB and Bank card state:", isBankCard_str, "- sent to device")
+	*/
 }
 
-func NewWebServer () (*WebServer, error) {
-	res := &WebServer{}
+func (server *WebServer) Start() {
+	log = structlog.New()
 
 	router := fasthttprouter.New()
 	router.PUT("/:sum/:iscard", ProcessReceipt)
@@ -63,6 +61,10 @@ func NewWebServer () (*WebServer, error) {
 
 	fmt.Println("Server is starting on port", port)
 	log.Fatal(fasthttp.ListenAndServe(port, router.Handler))
+}
+
+func NewWebServer () (*WebServer, error) {
+	res := &WebServer{}
 
 	return res, nil	
 }

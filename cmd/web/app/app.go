@@ -5,23 +5,14 @@ import "errors"
 import "strconv"
 
 var (
-	ErrCannotConnect = errors.New("Connection to KKT failed")
+	ErrCannotConnect = errors.New("Connection to Cash Register Device failed")
 )
 
-type WebApp struct {
-	
+type Application struct {
+
 }
 
-type CashRegisterDevice interface {
-	PingDevice() error
-	PrintReceipt() error
-}
-
-type KaznacheyFA struct {
-	
-}
-
-func (device *KaznacheyFA) PingDevice() error {
+func (a *Application) PingDevice() error {
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
@@ -40,7 +31,7 @@ func (device *KaznacheyFA) PingDevice() error {
 	return nil
 }
 
-func (device *KaznacheyFA) PrintReceipt(price float64, isBankCard bool) error {
+func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
@@ -89,9 +80,13 @@ func (device *KaznacheyFA) PrintReceipt(price float64, isBankCard bool) error {
 	return nil
 } 
 
-func NewWebApp () (*WebApp, error) {
-	res := &WebApp{}
+func NewApplication () (*Application, error) {
+	res := &Application{}
 	return res, nil	
+}
+
+func (a *Application) Start() {
+	// TO DO: start goroutine with data processing from DB
 }
 
 
