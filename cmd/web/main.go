@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	flag.Parse()
 
 	application, err := NewApplication()
 	if err != nil {
 		fmt.Println("Application start failure - program stopped")
 		return
 	}
+	// Should start in API
 	application.Start()	
 
 	// TO DO: transfer application to API

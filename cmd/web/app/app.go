@@ -13,6 +13,7 @@ type Application struct {
 }
 
 func (a *Application) PingDevice() error {
+	// add mutex
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
@@ -32,6 +33,7 @@ func (a *Application) PingDevice() error {
 }
 
 func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
+	// add mutex
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))

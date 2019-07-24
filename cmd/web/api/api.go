@@ -7,13 +7,12 @@ import (
 	"github.com/powerman/structlog"
 )
 
-var log *structlog.Logger
-
 type WebServer struct {
-
+	// send to constructor, change Log to log
+	log *structlog.Logger
 }
 
-func (server *WebServer) SubmitReceipt(ctx *fasthttp.RequestCtx) {
+func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	currentReceipt, err := NewReceipt()
 	if err != nil {
 		log.Fatalf("Error while creating a new receipt")
@@ -52,19 +51,20 @@ func (server *WebServer) SubmitReceipt(ctx *fasthttp.RequestCtx) {
 }
 
 func (server *WebServer) Start() {
-	log = structlog.New()
+	server.Log = structlog.New()
 
+	// start application here
 	router := fasthttprouter.New()
 	router.PUT("/:sum/:iscard", ProcessReceipt)
 
 	port := ":8080"
 
 	fmt.Println("Server is starting on port", port)
-	log.Fatal(fasthttp.ListenAndServe(port, router.Handler))
+	server.Log.Fatal(fasthttp.ListenAndServe(port, router.Handler))
 }
 
 func NewWebServer () (*WebServer, error) {
 	res := &WebServer{}
-
+	
 	return res, nil	
 }
