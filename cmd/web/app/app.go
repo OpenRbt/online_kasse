@@ -1,9 +1,12 @@
 package app
 
-import "github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
-
-import "errors"
-import "strconv"
+import (
+	"errors"
+	"fmt"
+	"strconv"
+	"sync"
+	"github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
+)
 
 var (
 	// ErrCannotConnect uses to describe Cash Register Device failures
@@ -16,7 +19,7 @@ type Application struct {
 
 // PingDevice checks connection to the Cash Register Device
 func (a *Application) PingDevice() error {
-	// add mutex
+	m.Lock()
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
@@ -32,12 +35,14 @@ func (a *Application) PingDevice() error {
 
 	fptr.Destroy()
 
+	m.Unlock()
 	return nil
 }
 
 // PrintReceipt is sending receipt data to Cash Register Device
 func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
-	// add mutex
+
+	m.Lock()
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
@@ -82,6 +87,7 @@ func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
 	fptr.Close()
 
 	fptr.Destroy()
+	m.Unlock()
 
 	return nil
 }
@@ -89,10 +95,13 @@ func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
 // NewApplication constructs Application
 func NewApplication() (*Application, error) {
 	res := &Application{}
+
+	fmt.Println("Application constructed")
 	return res, nil
 }
 
 // Start initializes receipt processing goroutine
 func (a *Application) Start() {
+	fmt.Println("Application started")
 	// TO DO: start goroutine with data processing from DB
 }

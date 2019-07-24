@@ -1,9 +1,10 @@
-package models
+package app
 
 // CashRegisterDevice is an interface for communicating with Cash Register Device
 type CashRegisterDevice interface {
 	PingDevice() error
-	PrintReceipt() error
+	PrintReceipt(float64, bool) error
+	Start()
 }
 
 // Receipt represents generic receipt object

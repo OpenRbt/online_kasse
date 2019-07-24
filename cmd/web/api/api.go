@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/models"
+	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/powerman/structlog"
 	"github.com/valyala/fasthttp"
@@ -13,12 +13,13 @@ import (
 
 // WebServer maintains PUT requestes and sends data to Application
 type WebServer struct {
-	log *structlog.Logger
+	log         *structlog.Logger
+	application app.CashRegisterDevice
 }
 
 // PushReceipt pushes new receipt object to Application
 func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
-	currentReceipt, err := models.NewReceipt()
+	currentReceipt, err := app.NewReceipt()
 	if err != nil {
 		log.Fatalf("Error while creating a new receipt")
 	}
@@ -45,24 +46,15 @@ func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	currentReceipt.Price = price
 	currentReceipt.IsBankCard = isBankCard
 
-	// TO DO: send receipt to APPLICATION
-
-	/*
-		printer, err := app.KaznacheyFA()
-		if err != nil {
-			log.Fatalf("Error while initializing a cash control device %v", err)
-		}
-
-		printer.PrintReceipt(price, isBankCard)
-		fmt.Println("Receipt with", price_str, "RUB and Bank card state:", isBankCard_str, "- sent to device")
-	*/
+	server.application.PrintReceipt(price, isBankCard)
 }
 
 // Start initializes WebServer
 func (server *WebServer) Start() {
 	server.log = structlog.New()
 
-	// start application here
+	server.application.Start()
+
 	router := fasthttprouter.New()
 	router.PUT("/:sum/:iscard", server.PushReceipt)
 
@@ -73,8 +65,9 @@ func (server *WebServer) Start() {
 }
 
 // NewWebServer constructs WebServer object
-func NewWebServer() (*WebServer, error) {
+func NewWebServer(application app.CashRegisterDevice) (*WebServer, error) {
 	res := &WebServer{}
+	res.application = application
 
 	return res, nil
 }
