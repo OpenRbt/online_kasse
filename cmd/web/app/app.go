@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+
 	"github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
 )
 
@@ -15,11 +16,12 @@ var (
 
 // Application is communicating with Cash Register Device
 type Application struct {
+	mutex sync.Mutex
 }
 
 // PingDevice checks connection to the Cash Register Device
-func (a *Application) PingDevice() error {
-	m.Lock()
+func (app *Application) PingDevice() error {
+	app.mutex.Lock()
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
@@ -35,14 +37,14 @@ func (a *Application) PingDevice() error {
 
 	fptr.Destroy()
 
-	m.Unlock()
+	app.mutex.Unlock()
 	return nil
 }
 
 // PrintReceipt is sending receipt data to Cash Register Device
-func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
+func (app *Application) PrintReceipt(price float64, isBankCard bool) error {
 
-	m.Lock()
+	app.mutex.Lock()
 	fptr := fptr10.New()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
@@ -87,21 +89,22 @@ func (a *Application) PrintReceipt(price float64, isBankCard bool) error {
 	fptr.Close()
 
 	fptr.Destroy()
-	m.Unlock()
+	app.mutex.Unlock()
 
 	return nil
 }
 
 // NewApplication constructs Application
-func NewApplication() (*Application, error) {
+func NewApplication(m sync.Mutex) (*Application, error) {
 	res := &Application{}
+	res.mutex = m
 
 	fmt.Println("Application constructed")
 	return res, nil
 }
 
 // Start initializes receipt processing goroutine
-func (a *Application) Start() {
+func (app *Application) Start() {
 	fmt.Println("Application started")
 	// TO DO: start goroutine with data processing from DB
 }
