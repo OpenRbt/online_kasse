@@ -8,6 +8,10 @@ github.com/cloudfoundry/gosigar v1.1.0/go.mod h1:3qLfc2GlfmwOx2+ZDaRGH3Y9fwQ0sQe
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod h1:duJ4Jxv5lDcvg4QuQr0oowTf7dz4/CR8NtyCooz9HL8=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
+github.com/go-pg/pg v8.0.4+incompatible h1:mNnhnAf6xtMNG0eNCAzBcBelIZvkGa99xJ+qBylZVJA=
+github.com/go-pg/pg v8.0.4+incompatible/go.mod h1:a2oXow+aFOrvwcKs3eIA0lNFmMilrxK2sOkB5NWe0vA=
+github.com/go-sql-driver/mysql v1.4.1 h1:g24URVg0OFbNUTx9qqY1IRZ9D9z3iPyi5zKhQZpNwpA=
+github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/gocarina/gocsv v0.0.0-20190129143436-91f6fc13d488 h1:KKvJw2OFJn3Bh+BziYCFit6r4I70pjEfy9vtNXoxqD0=
 github.com/gocarina/gocsv v0.0.0-20190129143436-91f6fc13d488/go.mod h1:/oj50ZdPq/cUjA02lMZhijk5kR31SEydKyqah1OgBuo=
 github.com/gocarina/gocsv/v2 v2.0.0-20181019111052-71f99b1720d2/go.mod h1:g7SrNGzi3lNWhpogl2lrJ6qaoQDLAwPRiWedc4B0Grs=
@@ -23,6 +27,8 @@ github.com/gramework/utils v0.0.0-20180427183540-d82c91416f14 h1:KBCnx7osefkcnow
 github.com/gramework/utils v0.0.0-20180427183540-d82c91416f14/go.mod h1:62TH8ocqQEUeIL3WbQeqYWNe/jlWnqU3ero9T1WPXsk=
 github.com/graph-gophers/graphql-go v0.0.0-20180806175703-94da0f0031f9/go.mod h1:aRnZGurV3LlZ1Y+ygyx1mAV6OUfq+nu6OgpJ6jKgZ3g=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
+github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
+github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jtolds/gls v4.2.1+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
 github.com/kirillDanshin/go-accept-headers v0.0.0-20130320203746-c78f304b1b09 h1:8QCKmCB7k/3XCUaisDYqSpZ/KrEsh8h3gRpeBCwOg3Q=
 github.com/kirillDanshin/go-accept-headers v0.0.0-20130320203746-c78f304b1b09/go.mod h1:bzzcb9Lqedgb3IPjVjtnwhBK6v5gTLrKYimXqT4a+vw=
@@ -53,6 +59,8 @@ github.com/valyala/fasthttp v0.0.0-20180831062205-5f6439b6df1c h1:Nsg22GybT+aOCs
 github.com/valyala/fasthttp v0.0.0-20180831062205-5f6439b6df1c/go.mod h1:+g/po7GqyG5E+1CNgquiIxJnsXEi5vwFn5weFujbO78=
 golang.org/x/crypto v0.0.0-20180830192347-182538f80094 h1:rVTAlhYa4+lCfNxmAIEOGQRoD23UqP72M3+rSWVGDTg=
 golang.org/x/crypto v0.0.0-20180830192347-182538f80094/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b h1:2b9XGzhjiYsYPnKXoEfL7klWZQIt8IfyRCz62gCqqlQ=
+golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180906233101-161cd47e91fd/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
@@ -64,3 +72,5 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMys=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+mellium.im/sasl v0.2.1 h1:nspKSRg7/SyO0cRGY71OkfHab8tf9kCts6a6oTDut0w=
+mellium.im/sasl v0.2.1/go.mod h1:ROaEDLQNuf9vjKqE1SrAfnsobm2YKXT1gnN1uDp1PjQ=

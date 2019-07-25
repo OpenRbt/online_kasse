@@ -46,7 +46,7 @@ func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	currentReceipt.Price = price
 	currentReceipt.IsBankCard = isBankCard
 
-	server.application.PrintReceipt(price, isBankCard)
+	server.application.RegisterReceipt(currentReceipt)
 }
 
 // Start initializes WebServer
