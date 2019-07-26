@@ -1,29 +1,25 @@
 package app
 
-// CashRegisterDevice is an interface for communicating with Cash Register Device
-type CashRegisterDevice interface {
-	PingDevice() error
-	RegisterReceipt()
-	ResetShift()
-	PrintReceipt(float64, bool) error
-	Start()
-}
-
-// Receipt represents generic receipt object
+// Receipt represents generic Receipt object
 type Receipt struct {
 	Price      float64
 	IsBankCard bool
 }
 
-// ReceiptList represents list of generic receipt objects
+// ReceiptList represents list of Receipts
 type ReceiptList struct {
+	Receipts []Receipt
+	Total    int
 }
 
-// GetData represents object for transfering config data to DAL
-type GetData struct {
+// QueryData represents object for transfering query config data to DAL
+type QueryData struct {
+	Limit     int
+	LastID    int
+	ReceiptID int
 }
 
-// NewReceipt constructs a receipt object
+// NewReceipt constructs a Receipt object
 func NewReceipt() (*Receipt, error) {
 	res := &Receipt{}
 	return res, nil
