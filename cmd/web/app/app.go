@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 )
 
 // IncomeRegistration is an interface for accepting income Receipts from Web Server
@@ -12,15 +13,17 @@ type IncomeRegistration interface {
 
 // DataAccessLayer is an interface for DAL usage from Application
 type DataAccessLayer interface {
-	GetByPrice(*QueryData) (*ReceiptList, error)
-	GetWithBankCards(*QueryData) (*ReceiptList, error)
-	GetWithCash(*QueryData) (*ReceiptList, error)
-	GetProcessedOnly(*QueryData) (*ReceiptList, error)
-	GetUnprocessedOnly(*QueryData) (*ReceiptList, error)
+	GetByPrice(QueryData) (*ReceiptList, error)
+	GetWithBankCards(QueryData) (*ReceiptList, error)
+	GetWithCash(QueryData) (*ReceiptList, error)
+	GetUnprocessedOnly(QueryData) (*ReceiptList, error)
+	GetProcessedOnly(QueryData) (*ReceiptList, error)
 
 	Create(*Receipt) (*Receipt, error)
 
-	DeleteByID(*Receipt) (*Receipt, error)
+	UpdateStatus(*Receipt) (bool, error)
+
+	DeleteByID(int64) (int64, error)
 }
 
 // DeviceAccessLayer is an interface for DevAL usage from Application
@@ -42,6 +45,8 @@ type Application struct {
 // RegisterReceipt sends Receipt to DAL for saving/registration
 func (app *Application) RegisterReceipt(currentData *Receipt) {
 	app.DB.Create(currentData)
+	list, _ := app.DB.GetUnprocessedOnly(QueryData{Limit: 100, LastId: 0})
+	fmt.Println(list)
 }
 
 // NewApplication constructs Application

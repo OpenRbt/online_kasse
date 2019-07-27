@@ -2,6 +2,7 @@ package app
 
 // Receipt represents generic Receipt object
 type Receipt struct {
+	Id         int64
 	Price      float64
 	IsBankCard bool
 }
@@ -14,9 +15,9 @@ type ReceiptList struct {
 
 // QueryData represents object for transfering query config data to DAL
 type QueryData struct {
-	Limit     int
-	LastID    int
-	ReceiptID int
+	Limit  int
+	LastId int
+	Price  int
 }
 
 // NewReceipt constructs a Receipt object
