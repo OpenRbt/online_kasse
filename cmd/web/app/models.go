@@ -21,7 +21,6 @@ type QueryData struct {
 }
 
 // NewReceipt constructs a Receipt object
-func NewReceipt() (*Receipt, error) {
-	res := &Receipt{}
-	return res, nil
+func NewReceipt() *Receipt {
+	return &Receipt{}
 }

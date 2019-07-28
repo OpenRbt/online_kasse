@@ -12,8 +12,8 @@ import (
 type Receipt struct {
 	ID          int64
 	Price       float64
-	IsBankCard  bool
-	IsProcessed bool
+	IsBankCard  int8
+	IsProcessed int8
 }
 
 // PostgresDAL represents data for connection to Data base
@@ -55,14 +55,18 @@ func NewPostgresDAL(user string, password string, host string) (*PostgresDAL, er
 	return res, nil
 }
 
-func makeAppReceipt(from Receipt) (app.Receipt, error) {
-	appReceipt, err := app.NewReceipt()
-	if err != nil {
-		return nil, err
-	}
+func makeAppReceipt(from Receipt) app.Receipt {
+	var appReceipt app.Receipt
+
 	appReceipt.Price = from.Price
 	appReceipt.ID = from.ID
-	appReceipt.IsBankCard = from.IsBankCard
+
+	if from.IsBankCard == 1 {
+		appReceipt.IsBankCard = true
+	} else if from.IsBankCard == -1 {
+		appReceipt.IsBankCard = false
+	}
+
 	return appReceipt
 }
 
@@ -96,7 +100,14 @@ func createSchema(db *pg.DB) error {
 func (t *PostgresDAL) Create(current *app.Receipt) (*app.Receipt, error) {
 	var target Receipt
 	target.Price = current.Price
-	target.IsBankCard = current.IsBankCard
+
+	if current.IsBankCard {
+		target.IsBankCard = 1
+	} else {
+		target.IsBankCard = -1
+	}
+
+	target.IsProcessed = -1
 
 	err := t.DataBase.Insert(&target)
 
@@ -112,7 +123,6 @@ func (t *PostgresDAL) Create(current *app.Receipt) (*app.Receipt, error) {
 func (t *PostgresDAL) DeleteByID(ID int64) (int64, error) {
 	var target Receipt
 	target.ID = ID
-	target.IsProcessed = false
 
 	err := t.DataBase.Delete(&target)
 
@@ -127,9 +137,14 @@ func (t *PostgresDAL) DeleteByID(ID int64) (int64, error) {
 func (t *PostgresDAL) UpdateStatus(current *app.Receipt) (bool, error) {
 	var target Receipt
 	target.ID = current.ID
-	target.IsProcessed = true
+	target.IsProcessed = 1
 	target.Price = current.Price
-	target.IsBankCard = current.IsBankCard
+
+	if current.IsBankCard {
+		target.IsBankCard = 1
+	} else {
+		target.IsBankCard = -1
+	}
 
 	err := t.DataBase.Update(&target)
 
@@ -144,7 +159,7 @@ func (t *PostgresDAL) UpdateStatus(current *app.Receipt) (bool, error) {
 func (t *PostgresDAL) GetProcessedOnly(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 
-	err := t.DataBase.Model(&foundReceipts).Where("is_processed = ?", true).Where("id > ?", current.LastId).Limit(current.Limit).Select()
+	err := t.DataBase.Model(&foundReceipts).Where("is_processed = 1").Where("id > ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
 		fmt.Println(err)
@@ -159,7 +174,7 @@ func (t *PostgresDAL) GetProcessedOnly(current app.QueryData) (*app.ReceiptList,
 func (t *PostgresDAL) GetUnprocessedOnly(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 
-	err := t.DataBase.Model(&foundReceipts).Where("is_processed = 0").Where("id >= ?", current.LastId).Limit(current.Limit).Select()
+	err := t.DataBase.Model(&foundReceipts).Where("is_processed = -1").Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
 		fmt.Println(err)
@@ -175,14 +190,14 @@ func (t *PostgresDAL) GetByPrice(current app.QueryData) (*app.ReceiptList, error
 	var foundReceipts []Receipt
 	var convertedReceipts []app.Receipt
 
-	err := t.DataBase.Model(&foundReceipts).Where("price = ?", current.Price).Where("id >= ?", current.LastId).Limit(current.Limit).Select()
+	err := t.DataBase.Model(&foundReceipts).Where("price = ?", current.Price).Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	convertedReceipts := makeAppReceiptSlice(foundReceipts)
+	convertedReceipts = makeAppReceiptSlice(foundReceipts)
 	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
 }
 
@@ -191,14 +206,14 @@ func (t *PostgresDAL) GetWithBankCards(current app.QueryData) (*app.ReceiptList,
 	var foundReceipts []Receipt
 	var convertedReceipts []app.Receipt
 
-	err := t.DataBase.Model(&foundReceipts).Where("is_bank_card = 1").Where("id >= ?", current.LastId).Limit(current.Limit).Select()
+	err := t.DataBase.Model(&foundReceipts).Where("is_bank_card = 1").Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	convertedReceipts := makeAppReceiptSlice(foundReceipts)
+	convertedReceipts = makeAppReceiptSlice(foundReceipts)
 	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
 }
 
@@ -208,13 +223,13 @@ func (t *PostgresDAL) GetWithCash(current app.QueryData) (*app.ReceiptList, erro
 	var foundReceipts []Receipt
 	var convertedReceipts []app.Receipt
 
-	err := t.DataBase.Model(&foundReceipts).Where("is_bank_card = 0").Where("id >= ?", current.LastId).Limit(current.Limit).Select()
+	err := t.DataBase.Model(&foundReceipts).Where("is_bank_card = -1").Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
 
-	convertedReceipts := makeAppReceiptSlice(foundReceipts)
+	convertedReceipts = makeAppReceiptSlice(foundReceipts)
 	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
 }

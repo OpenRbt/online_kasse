@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
@@ -19,10 +18,7 @@ type WebServer struct {
 
 // PushReceipt pushes new Receipt to Application
 func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
-	currentReceipt, err := app.NewReceipt()
-	if err != nil {
-		log.Fatalf("Error while creating a new receipt")
-	}
+	currentReceipt := app.NewReceipt()
 
 	priceStr := ctx.UserValue("sum").(string)
 	isBankCardStr := ctx.UserValue("iscard").(string)
