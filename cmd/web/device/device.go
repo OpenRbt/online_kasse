@@ -67,7 +67,7 @@ func (dev *KaznacheyFA) PingDevice() error {
 }
 
 // PrintReceipt sends Receipt to the Device driver
-func (dev *KaznacheyFA) PrintReceipt(data *app.Receipt) error {
+func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	dev.mutex.Lock()
 	fptr := fptr10.New()
 

@@ -134,7 +134,7 @@ func (t *PostgresDAL) DeleteByID(ID int64) (int64, error) {
 }
 
 // UpdateStatus changes IsProcessed field to true
-func (t *PostgresDAL) UpdateStatus(current *app.Receipt) (bool, error) {
+func (t *PostgresDAL) UpdateStatus(current app.Receipt) (bool, error) {
 	var target Receipt
 	target.ID = current.ID
 	target.IsProcessed = 1

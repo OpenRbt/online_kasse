@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"time"
 )
 
 // IncomeRegistration is an interface for accepting income Receipts from Web Server
@@ -20,7 +21,7 @@ type DataAccessLayer interface {
 
 	Create(*Receipt) (*Receipt, error)
 
-	UpdateStatus(*Receipt) (bool, error)
+	UpdateStatus(Receipt) (bool, error)
 
 	DeleteByID(int64) (int64, error)
 }
@@ -28,7 +29,7 @@ type DataAccessLayer interface {
 // DeviceAccessLayer is an interface for DevAL usage from Application
 type DeviceAccessLayer interface {
 	ResetShift() error
-	PrintReceipt(*Receipt) error
+	PrintReceipt(Receipt) error
 	PingDevice() error
 }
 
@@ -56,7 +57,40 @@ func NewApplication(db DataAccessLayer, dev DeviceAccessLayer) (*Application, er
 	return res, nil
 }
 
+func (app *Application) loop() {
+	needToSleep := false
+	for {
+		listToProcess, err := app.DB.GetUnprocessedOnly(QueryData{Limit: 1, LastID: 0})
+		if err != nil {
+			continue
+		}
+
+		if listToProcess.Total != 0 {
+			needToSleep = false
+
+			receiptToProcess := listToProcess.Receipts[0]
+			err := app.Device.PrintReceipt(receiptToProcess)
+			if err != nil {
+				continue
+			}
+
+			res, err := app.DB.UpdateStatus(receiptToProcess)
+			if err != nil || res == false {
+				// could be dangerous
+				continue
+			}
+
+		} else {
+			needToSleep = true
+		}
+
+		if needToSleep {
+			time.Sleep(time.Second * 5)
+		}
+	}
+}
+
 // Start initializes Receipt Processing goroutine
 func (app *Application) Start() {
-
+	go app.loop()
 }
