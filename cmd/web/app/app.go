@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -71,11 +72,13 @@ func (app *Application) loop() {
 			receiptToProcess := listToProcess.Receipts[0]
 			err := app.Device.PrintReceipt(receiptToProcess)
 			if err != nil {
+				fmt.Println(err)
 				continue
 			}
 
 			res, err := app.DB.UpdateStatus(receiptToProcess)
 			if err != nil || res == false {
+				fmt.Println(err)
 				// could be dangerous
 				continue
 			}

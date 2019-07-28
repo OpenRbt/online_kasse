@@ -57,7 +57,7 @@ func (server *WebServer) Start() {
 	port := ":8080"
 
 	fmt.Println("Server is starting on port", port)
-	server.log.Fatal(fasthttp.ListenAndServe(port, router.Handler))
+	server.log.Fatal(fasthttp.ListenAndServeTLS(port, "cert.pem", "key.pem", router.Handler))
 }
 
 // NewWebServer constructs Web Server
