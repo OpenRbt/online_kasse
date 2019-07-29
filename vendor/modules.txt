@@ -1,3 +1,35 @@
-# golang.org/x/sys v0.0.0-20181023152157-44b849a8bc13
+# github.com/buaazp/fasthttprouter v0.1.1
+github.com/buaazp/fasthttprouter
+# github.com/go-pg/pg v8.0.4+incompatible
+github.com/go-pg/pg
+github.com/go-pg/pg/orm
+github.com/go-pg/pg/internal
+github.com/go-pg/pg/internal/pool
+github.com/go-pg/pg/types
+github.com/go-pg/pg/internal/iszero
+github.com/go-pg/pg/internal/parser
+github.com/go-pg/pg/internal/struct_filter
+github.com/go-pg/pg/internal/tag
+# github.com/jinzhu/inflection v1.0.0
+github.com/jinzhu/inflection
+# github.com/klauspost/compress v1.4.0
+github.com/klauspost/compress/flate
+github.com/klauspost/compress/gzip
+github.com/klauspost/compress/zlib
+# github.com/klauspost/cpuid v0.0.0-20180405133222-e7e905edc00e
+github.com/klauspost/cpuid
+# github.com/powerman/structlog v0.5.0
+github.com/powerman/structlog
+# github.com/valyala/bytebufferpool v0.0.0-20160817181652-e746df99fe4a
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasthttp v0.0.0-20180831062205-5f6439b6df1c
+github.com/valyala/fasthttp
+github.com/valyala/fasthttp/fasthttputil
+github.com/valyala/fasthttp/stackless
+# golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b
+golang.org/x/crypto/pbkdf2
+# golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
+# mellium.im/sasl v0.2.1
+mellium.im/sasl
