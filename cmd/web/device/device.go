@@ -14,6 +14,7 @@ type KaznacheyFA struct {
 }
 
 // ResetShift sends signal to Device, which will close current shift and will open new one
+//nolint
 func (dev *KaznacheyFA) ResetShift() error {
 	dev.mutex.Lock()
 	fptr := fptr10.New()
@@ -45,6 +46,7 @@ func (dev *KaznacheyFA) ResetShift() error {
 }
 
 // PingDevice checks connection to the Device
+//nolint
 func (dev *KaznacheyFA) PingDevice() error {
 	dev.mutex.Lock()
 	fptr := fptr10.New()
@@ -67,6 +69,7 @@ func (dev *KaznacheyFA) PingDevice() error {
 }
 
 // PrintReceipt sends Receipt to the Device driver
+//nolint
 func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	dev.mutex.Lock()
 	fptr := fptr10.New()

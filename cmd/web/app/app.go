@@ -45,7 +45,12 @@ type Application struct {
 
 // RegisterReceipt sends Receipt to DAL for saving/registration
 func (app *Application) RegisterReceipt(currentData *Receipt) {
-	app.DB.Create(currentData)
+	_, err := app.DB.Create(currentData)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 // NewApplication constructs Application
@@ -76,8 +81,8 @@ func (app *Application) loop() {
 				continue
 			}
 
-			res, err := app.DB.UpdateStatus(receiptToProcess)
-			if err != nil || res == false {
+			_, err = app.DB.UpdateStatus(receiptToProcess)
+			if err != nil {
 				fmt.Println(err)
 				// could be dangerous
 				continue
