@@ -11,6 +11,7 @@ import (
 // Receipt represents generic Receipt object in DAL
 type Receipt struct {
 	ID          int64
+	Post        int64
 	Price       float64
 	IsBankCard  int8
 	IsProcessed int8
@@ -60,6 +61,7 @@ func makeAppReceipt(from Receipt) app.Receipt {
 
 	appReceipt.Price = from.Price
 	appReceipt.ID = from.ID
+	appReceipt.Post = from.Post
 
 	if from.IsBankCard == 1 {
 		appReceipt.IsBankCard = true
@@ -100,6 +102,7 @@ func createSchema(db *pg.DB) error {
 func (t *PostgresDAL) Create(current *app.Receipt) (*app.Receipt, error) {
 	var target Receipt
 	target.Price = current.Price
+	target.Post = current.Post
 
 	if current.IsBankCard {
 		target.IsBankCard = 1
@@ -139,6 +142,7 @@ func (t *PostgresDAL) UpdateStatus(current app.Receipt) (bool, error) {
 	target.ID = current.ID
 	target.IsProcessed = 1
 	target.Price = current.Price
+	target.Post = current.Post
 
 	if current.IsBankCard {
 		target.IsBankCard = 1
@@ -185,22 +189,6 @@ func (t *PostgresDAL) GetUnprocessedOnly(current app.QueryData) (*app.ReceiptLis
 	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
 }
 
-// GetByPrice returns a list of Receipts by specified price (for instance: 50 or 100 RUB)
-func (t *PostgresDAL) GetByPrice(current app.QueryData) (*app.ReceiptList, error) {
-	var foundReceipts []Receipt
-	var convertedReceipts []app.Receipt
-
-	err := t.DataBase.Model(&foundReceipts).Where("price = ?", current.Price).Where("id >= ?", current.LastID).Limit(current.Limit).Select()
-
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	convertedReceipts = makeAppReceiptSlice(foundReceipts)
-	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
-}
-
 // GetWithBankCards returns a list of Receipts paid by Bank Cards only
 func (t *PostgresDAL) GetWithBankCards(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
@@ -219,11 +207,26 @@ func (t *PostgresDAL) GetWithBankCards(current app.QueryData) (*app.ReceiptList,
 
 // GetWithCash returns a list of Receipts paid by Cash only
 func (t *PostgresDAL) GetWithCash(current app.QueryData) (*app.ReceiptList, error) {
-
 	var foundReceipts []Receipt
 	var convertedReceipts []app.Receipt
 
 	err := t.DataBase.Model(&foundReceipts).Where("is_bank_card = -1").Where("id >= ?", current.LastID).Limit(current.Limit).Select()
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	convertedReceipts = makeAppReceiptSlice(foundReceipts)
+	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
+}
+
+// GetByPost returns a list of Receipts by specified post number
+func (t *PostgresDAL) GetByPost(current app.QueryData) (*app.ReceiptList, error) {
+	var foundReceipts []Receipt
+	var convertedReceipts []app.Receipt
+
+	err := t.DataBase.Model(&foundReceipts).Where("post = ?", current.Post).Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
 		fmt.Println(err)

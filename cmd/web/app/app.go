@@ -14,7 +14,7 @@ type IncomeRegistration interface {
 
 // DataAccessLayer is an interface for DAL usage from Application
 type DataAccessLayer interface {
-	GetByPrice(QueryData) (*ReceiptList, error)
+	GetByPost(QueryData) (*ReceiptList, error)
 	GetWithBankCards(QueryData) (*ReceiptList, error)
 	GetWithCash(QueryData) (*ReceiptList, error)
 	GetUnprocessedOnly(QueryData) (*ReceiptList, error)
