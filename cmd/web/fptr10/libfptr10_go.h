@@ -1,3 +1,7 @@
+/**
+ * AUTO GENERATED FILE
+ */
+
 #ifndef LIBFPTR10_GO_H_
 #define LIBFPTR10_GO_H_
 

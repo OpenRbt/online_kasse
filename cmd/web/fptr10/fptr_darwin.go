@@ -27,9 +27,12 @@ func getProcAddress(lib unsafe.Pointer, name string) unsafe.Pointer {
 }
 
 func loadLibrary() (*functionPointers, error) {
-	lib := C.dlopen(C.CString("libfptr10.so"), C.RTLD_LAZY)
+	lib := C.dlopen(C.CString("fptr10.framework/fptr10"), C.RTLD_LAZY)
 	if lib == nil {
-		return nil, fmt.Errorf("Can't load library \"libfptr10.so\" - %s", C.GoString(C.dlerror()))
+		lib = C.dlopen(C.CString("libfptr10.dylib"), C.RTLD_LAZY)
+		if lib == nil {
+			return nil, fmt.Errorf("Can't load \"fptr10\" framework or library - %s", C.GoString(C.dlerror()))
+		}
 	}
 	return &functionPointers{
 		C.libfptr_create_func(getProcAddress(lib, "libfptr_create")),
