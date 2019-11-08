@@ -1,8 +1,6 @@
 package dal
 
 import (
-	"fmt"
-
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
@@ -31,7 +29,6 @@ func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
 }
 
 func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
-	fmt.Println(q.FormattedQuery())
 }
 
 // NewPostgresDAL constructs object of PostgresDAL
@@ -90,7 +87,6 @@ func createSchema(db *pg.DB) error {
 			IfNotExists: true,
 		})
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 	}
@@ -115,7 +111,6 @@ func (t *PostgresDAL) Create(current *app.Receipt) (*app.Receipt, error) {
 	err := t.DataBase.Insert(&target)
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -166,7 +161,6 @@ func (t *PostgresDAL) GetProcessedOnly(current app.QueryData) (*app.ReceiptList,
 	err := t.DataBase.Model(&foundReceipts).Where("is_processed = 1").Where("id > ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -181,7 +175,6 @@ func (t *PostgresDAL) GetUnprocessedOnly(current app.QueryData) (*app.ReceiptLis
 	err := t.DataBase.Model(&foundReceipts).Where("is_processed = -1").Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -197,7 +190,6 @@ func (t *PostgresDAL) GetWithBankCards(current app.QueryData) (*app.ReceiptList,
 	err := t.DataBase.Model(&foundReceipts).Where("is_bank_card = 1").Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -213,7 +205,6 @@ func (t *PostgresDAL) GetWithCash(current app.QueryData) (*app.ReceiptList, erro
 	err := t.DataBase.Model(&foundReceipts).Where("is_bank_card = -1").Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -229,7 +220,6 @@ func (t *PostgresDAL) GetByPost(current app.QueryData) (*app.ReceiptList, error)
 	err := t.DataBase.Model(&foundReceipts).Where("post = ?", current.Post).Where("id >= ?", current.LastID).Limit(current.Limit).Select()
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

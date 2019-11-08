@@ -10,9 +10,10 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+var log = structlog.New()
+
 // WebServer accepts PUT requests with payload of Receipts and pushes them to Application
 type WebServer struct {
-	log         *structlog.Logger
 	application app.IncomeRegistration
 }
 
@@ -51,28 +52,28 @@ func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	currentReceipt.Price = price
 	currentReceipt.IsBankCard = isBankCard
 
+	log.Info("API got new receipt")
+
 	server.application.RegisterReceipt(currentReceipt)
 }
 
 // Start initializes Web Server, starts application and begins serving
-func (server *WebServer) Start() {
-	server.log = structlog.New()
-
+func (server *WebServer) Start(errc chan<- error) {
 	server.application.Start()
 
 	router := fasthttprouter.New()
 	router.PUT("/:post/:sum/:iscard", server.PushReceipt)
 
-	port := ":8080"
+	port := ":443"
 
-	fmt.Println("Server is starting on port", port)
-	server.log.Fatal(fasthttp.ListenAndServeTLS(port, "cert.pem", "key.pem", router.Handler))
+	log.Info("Server is starting on port", port)
+	errc <- fasthttp.ListenAndServeTLS(port, "cert.pem", "key.pem", router.Handler)
 }
 
 // NewWebServer constructs Web Server
-func NewWebServer(application app.IncomeRegistration) (*WebServer, error) {
+func NewWebServer(application app.IncomeRegistration) *WebServer {
 	res := &WebServer{}
 	res.application = application
 
-	return res, nil
+	return res
 }

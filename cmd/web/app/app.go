@@ -2,9 +2,12 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"time"
+
+	"github.com/powerman/structlog"
 )
+
+var log = structlog.New()
 
 // IncomeRegistration is an interface for accepting income Receipts from Web Server
 type IncomeRegistration interface {
@@ -41,6 +44,7 @@ var ErrCannotConnect = errors.New("Device Access Layer is unavailable")
 type Application struct {
 	DB     DataAccessLayer
 	Device DeviceAccessLayer
+	errc   chan<- error
 }
 
 // RegisterReceipt sends Receipt to DAL for saving/registration
@@ -48,26 +52,29 @@ func (app *Application) RegisterReceipt(currentData *Receipt) {
 	_, err := app.DB.Create(currentData)
 
 	if err != nil {
-		fmt.Println(err)
+		app.errc <- err
 		return
 	}
+	log.Info("New receipt added to DB")
 }
 
 // NewApplication constructs Application
-func NewApplication(db DataAccessLayer, dev DeviceAccessLayer) (*Application, error) {
+func NewApplication(db DataAccessLayer, dev DeviceAccessLayer, errchannel chan<- error) *Application {
 	res := &Application{}
 
 	res.DB = db
 	res.Device = dev
+	res.errc = errchannel
 
-	return res, nil
+	return res
 }
 
 func (app *Application) loop() {
 	needToSleep := false
 	for {
 		listToProcess, err := app.DB.GetUnprocessedOnly(QueryData{Limit: 1, LastID: 0})
-		if err != nil {
+		if listToProcess == nil || err != nil {
+			log.Info("List of unprocessed receipts is empty")
 			continue
 		}
 
@@ -77,16 +84,17 @@ func (app *Application) loop() {
 			receiptToProcess := listToProcess.Receipts[0]
 			err := app.Device.PrintReceipt(receiptToProcess)
 			if err != nil {
-				fmt.Println(err)
+				log.Info("Error while printing a receipt")
 				continue
 			}
+			log.Info("Receipt printed")
 
 			_, err = app.DB.UpdateStatus(receiptToProcess)
 			if err != nil {
-				fmt.Println(err)
-				// could be dangerous
+				log.Info("Error while updating a receipt")
 				continue
 			}
+			log.Info("Receipt updated in DB")
 
 		} else {
 			needToSleep = true

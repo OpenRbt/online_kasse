@@ -28,7 +28,7 @@ func (dev *KaznacheyFA) ResetShift() error {
 		return app.ErrCannotConnect
 	}
 
-	fptr.SetParam(1021, "Кассир Иванов И.")
+	fptr.SetParam(1021, "Кассир Канатников Александр")
 	fptr.SetParam(1203, "123456789047")
 	fptr.OperatorLogin()
 
@@ -83,7 +83,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 		return app.ErrCannotConnect
 	}
 
-	fptr.SetParam(1021, "Кассир Иванов И.")
+	fptr.SetParam(1021, "Кассир Канатников Александр")
 	fptr.SetParam(1203, "123456789047")
 	fptr.OperatorLogin()
 
