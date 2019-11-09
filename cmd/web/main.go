@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/DiaElectronics/online_kasse/cmd/web/api"
@@ -34,7 +33,6 @@ func run(errc chan<- error) {
 }
 
 func main() {
-	structlog.DefaultLogger.SetLogLevel(structlog.ParseLevel(structlog.DBG))
 	log.Info("Server is preparing to start...")
 
 	errc := make(chan error)
