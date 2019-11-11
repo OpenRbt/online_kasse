@@ -157,6 +157,9 @@ func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
 	fptr.Report()
 
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
 	fptr.CheckDocumentClosed()
 
 	log.Info(fptr.ErrorCode())
