@@ -151,9 +151,6 @@ func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
 	fptr.ApplySingleSettings()
 
 	fptr.Open()
-	if !fptr.IsOpened() {
-		return app.ErrCannotConnect
-	}
 
 	log.Info("Connection to kasse opened")
 
@@ -178,11 +175,7 @@ func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO)
 	fptr.Registration()
 
-	if data.IsBankCard {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY)
-	} else {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
-	}
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
 
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, 10)
 	fptr.Payment()
