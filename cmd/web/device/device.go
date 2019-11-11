@@ -154,26 +154,12 @@ func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
 
 	log.Info("Connection to kasse opened")
 
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_DATA_TYPE, fptr10.LIBFPTR_DT_FATAL_STATUS)
-	fptr.QueryData()
-
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_NO_SERIAL_NUMBER))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_RTC_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_SETTINGS_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_COUNTERS_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_USER_MEMORY_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_SERVICE_COUNTERS_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_ATTRIBUTES_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_FN_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_INVALID_FN))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_HARD_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_MEMORY_MANAGER_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_SCRIPTS_FAULT))
-	log.Info(fptr.GetParamBool(fptr10.LIBFPTR_PARAM_WAIT_FOR_REBOOT))
-
-	fptr.SetParam(1021, "Кассир Канатников Александр")
+	fptr.SetParam(1021, "Пост 1")
 	fptr.SetParam(1203, "123456789047")
 	fptr.OperatorLogin()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
 
 	fptr.OpenShift()
 
