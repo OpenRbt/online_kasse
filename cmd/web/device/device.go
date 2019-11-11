@@ -154,6 +154,10 @@ func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
 
 	log.Info("Connection to kasse opened")
 
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_DATA_TYPE, fptr10.LIBFPTR_DT_STATUS)
+	fptr.QueryData()
+	log.Info(fptr.GetParamInt(fptr10.LIBFPTR_PARAM_SHIFT_STATE))
+
 	fptr.SetParam(1021, "Кассир Канатников Александр")
 	fptr.SetParam(1203, "123456789047")
 	fptr.OperatorLogin()
