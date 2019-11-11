@@ -144,5 +144,65 @@ func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
 	res := &KaznacheyFA{}
 	res.mutex = mut
 
+	fptr := fptr10.New()
+
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_PORT, strconv.Itoa(fptr10.LIBFPTR_PORT_USB))
+	fptr.ApplySingleSettings()
+
+	fptr.Open()
+	if !fptr.IsOpened() {
+		return app.ErrCannotConnect
+	}
+
+	log.Info("Connection to kasse opened")
+
+	fptr.SetParam(1021, "Кассир Канатников Александр")
+	fptr.SetParam(1203, "123456789047")
+	fptr.OperatorLogin()
+
+	fptr.OpenShift()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE, fptr10.LIBFPTR_RT_SELL)
+	fptr.OpenReceipt()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, 10)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO)
+	fptr.Registration()
+
+	if data.IsBankCard {
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY)
+	} else {
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
+	}
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, 10)
+	fptr.Payment()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
+	fptr.CloseReceipt()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
+	fptr.CheckDocumentClosed()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
+	fptr.Close()
+
+	fptr.Destroy()
+
 	return res, nil
 }
