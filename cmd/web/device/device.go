@@ -6,7 +6,10 @@ import (
 
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
+	"github.com/powerman/structlog"
 )
+
+var log = structlog.New()
 
 // KaznacheyFA representes object of Device, connected by USB
 type KaznacheyFA struct {
@@ -83,14 +86,22 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 		return app.ErrCannotConnect
 	}
 
+	log.Info("Connection to kasse opened")
+
 	fptr.SetParam(1021, "Кассир Канатников Александр")
 	fptr.SetParam(1203, "123456789047")
 	fptr.OperatorLogin()
 
 	fptr.OpenShift()
 
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE, fptr10.LIBFPTR_RT_SELL)
 	fptr.OpenReceipt()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
 
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Price)
@@ -107,8 +118,18 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Price)
 	fptr.Payment()
 
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
 	fptr.CloseReceipt()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
+
 	fptr.CheckDocumentClosed()
+
+	log.Info(fptr.ErrorCode())
+	log.Info(fptr.ErrorDescription())
 
 	fptr.Close()
 
