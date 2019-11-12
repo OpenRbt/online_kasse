@@ -183,8 +183,8 @@ func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
 	log.Info(fptr.ErrorCode())
 	log.Info(fptr.ErrorDescription())
 
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, 10)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля - тестовый чек")
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, 15)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO)
 	fptr.Registration()
