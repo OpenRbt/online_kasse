@@ -16,58 +16,30 @@ type KaznacheyFA struct {
 	mutex sync.Mutex
 }
 
-// ResetShift sends signal to Device, which will close current shift and will open new one
-//nolint
-func (dev *KaznacheyFA) ResetShift() error {
-	dev.mutex.Lock()
-	fptr := fptr10.New()
-
-	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
-	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_PORT, strconv.Itoa(fptr10.LIBFPTR_PORT_USB))
-	fptr.ApplySingleSettings()
-
-	fptr.Open()
-	if !fptr.IsOpened() {
-		return app.ErrCannotConnect
-	}
-
-	fptr.SetParam(1021, "Кассир Канатников Александр")
-	fptr.SetParam(1203, "123456789047")
-	fptr.OperatorLogin()
-
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
-	fptr.Report()
-
-	fptr.OpenShift()
-
-	fptr.Close()
-
-	fptr.Destroy()
-	dev.mutex.Unlock()
-
-	return nil
-}
-
 // PingDevice checks connection to the Device
 //nolint
 func (dev *KaznacheyFA) PingDevice() error {
 	dev.mutex.Lock()
+	defer dev.mutex.Unlock()
+
 	fptr := fptr10.New()
+	defer fptr.Destroy()
 
-	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_KAZNACHEY_FA))
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_PORT, strconv.Itoa(fptr10.LIBFPTR_PORT_USB))
-	fptr.ApplySingleSettings()
 
-	fptr.Open()
-	if !fptr.IsOpened() {
-		fptr.Destroy()
+	if err := fptr.ApplySingleSettings(); err != nil {
+		log.Info(err)
+		return app.ErrSetupFailure
+	}
+
+	if err := fptr.Open(); err != nil {
+		log.Info(err)
 		return app.ErrCannotConnect
 	}
+
 	fptr.Close()
 
-	fptr.Destroy()
-
-	dev.mutex.Unlock()
 	return nil
 }
 
@@ -75,40 +47,89 @@ func (dev *KaznacheyFA) PingDevice() error {
 //nolint
 func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	dev.mutex.Lock()
+	defer dev.mutex.Unlock()
+
 	fptr := fptr10.New()
+	defer fptr.Destroy()
 
-	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_ATOL_AUTO))
+	// Stage 1: Configure connection to Device
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_KAZNACHEY_FA))
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_PORT, strconv.Itoa(fptr10.LIBFPTR_PORT_USB))
-	fptr.ApplySingleSettings()
 
-	fptr.Open()
-	if !fptr.IsOpened() {
+	if err := fptr.ApplySingleSettings(); err != nil {
+		log.Info(err)
+		return app.ErrSetupFailure
+	}
+
+	// Stage 2: Connect to Device
+	if err := fptr.Open(); err != nil {
+		log.Info(err)
 		return app.ErrCannotConnect
 	}
 
-	log.Info("Connection to kasse opened")
+	log.Info("Connection to Cash Register Device opened")
 
-	fptr.SetParam(1021, "Кассир Канатников Александр")
-	fptr.SetParam(1203, "123456789047")
-	fptr.OperatorLogin()
+	// Stage 3: Register the responsible person
+	fptr.SetParam(1021, "Канатников А.В.")
+	fptr.SetParam(1203, "5401199801")
+	if err := fptr.OperatorLogin(); err != nil {
+		log.Info(err)
+		return app.ErrLoginFailure
+	}
 
+	// Stage 4: Check the shift: open or close it (and open again)
+	// If the shift was already opened - just do nothing
 	fptr.OpenShift()
+	errorCode := fptr.ErrorCode()
 
-	log.Info(fptr.ErrorCode())
-	log.Info(fptr.ErrorDescription())
+	// If shift expired (was more than 24 hours long) - close it and open again
+	if errorCode == 68 || errorCode == 141 {
+		log.Info("Shift expired - closing and reopening")
 
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
+		if err := fptr.Report(); err != nil {
+			log.Info(err)
+			return app.ErrShiftCloseFailure
+		}
+
+		fptr.OpenShift()
+		errorCode := fptr.ErrorCode()
+		if errorCode != 0 {
+			log.Info("Error while opening shift")
+			return app.ErrShiftOpenFailure
+		}
+	}
+
+	// Stage 5: Open receipt
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE, fptr10.LIBFPTR_RT_SELL)
-	fptr.OpenReceipt()
+	if err := fptr.OpenReceipt(); err != nil {
+		log.Info(err)
+		return app.ErrReceiptCreationFailure
+	}
 
-	log.Info(fptr.ErrorCode())
-	log.Info(fptr.ErrorDescription())
-
+	// Stage 6: Register the service or commodity
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Price)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO)
-	fptr.Registration()
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_VAT18)
 
+	// Set the service tags
+	fptr.SetParam(1212, 4)
+	fptr.SetParam(1214, 1)
+
+	if err := fptr.Registration(); err != nil {
+		log.Info(err)
+		return app.ErrReceiptRegistrationFailure
+	}
+
+	// Stage 7: Register the total
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_SUM, data.Price)
+	if err := fptr.ReceiptTotal(); err != nil {
+		log.Info(err)
+		return app.ErrTotalRegistrationFailure
+	}
+
+	// Stage 8: Set the payment method
 	if data.IsBankCard {
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY)
 	} else {
@@ -116,25 +137,54 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	}
 
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Price)
-	fptr.Payment()
+	if err := fptr.Payment(); err != nil {
+		log.Info(err)
+		return app.ErrPaymentSetFailure
+	}
 
-	log.Info(fptr.ErrorCode())
-	log.Info(fptr.ErrorDescription())
+	// Stage 9: Close the receipt
+	_ = fptr.CloseReceipt()
+	if err := fptr.CheckDocumentClosed(); err != nil {
+		log.Info(fptr.ErrorDescription())
+		return app.ErrReceiptCloseFailure
+	}
 
-	fptr.CloseReceipt()
+	// Stage 10: If Stage 9 failed - recover the receipt
+	if !fptr.GetParamBool(fptr10.LIBFPTR_PARAM_DOCUMENT_CLOSED) {
+		log.Info("Receipt can't be closed - recovering...")
+		_ = fptr.CancelReceipt()
+		return app.ErrReceiptCloseFailure
+	}
 
-	log.Info(fptr.ErrorCode())
-	log.Info(fptr.ErrorDescription())
+	// Stage 11: Check the printing process
+	if !fptr.GetParamBool(fptr10.LIBFPTR_PARAM_DOCUMENT_PRINTED) {
+		fptr.ContinuePrint()
+	}
 
-	fptr.CheckDocumentClosed()
+	// Stage 12: Get fiscal data about last receipt
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_FN_DATA_TYPE, fptr10.LIBFPTR_FNDT_LAST_DOCUMENT)
+	if err := fptr.FnQueryData(); err != nil {
+		log.Info(err)
+		return app.ErrUnableToGetFiscalData
+	}
+	log.Info("Fiscal Sign = %v", fptr.GetParamString(fptr10.LIBFPTR_PARAM_FISCAL_SIGN))
+	log.Info("Fiscal Document Number = %v", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENT_NUMBER))
 
-	log.Info(fptr.ErrorCode())
-	log.Info(fptr.ErrorDescription())
+	// Stage 13: Get data about unsent receipts
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_FN_DATA_TYPE, fptr10.LIBFPTR_FNDT_OFD_EXCHANGE_STATUS)
+	if err := fptr.FnQueryData(); err != nil {
+		log.Info(err)
+		return app.ErrUnableToGetFiscalData
+	}
+	log.Printf("Unsent documents count = %v", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENTS_COUNT))
+	log.Printf("First unsent document number = %v", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENT_NUMBER))
+	log.Printf("First unsent document date = %v", fptr.GetParamDateTime(fptr10.LIBFPTR_PARAM_DATE_TIME))
 
-	fptr.Close()
-
-	fptr.Destroy()
-	dev.mutex.Unlock()
+	// Stage 14: Close the connection
+	if err := fptr.Close(); err != nil {
+		log.Info(err)
+		return app.ErrCannotDisconnect
+	}
 
 	return nil
 }

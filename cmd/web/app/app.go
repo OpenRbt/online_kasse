@@ -32,13 +32,25 @@ type DataAccessLayer interface {
 
 // DeviceAccessLayer is an interface for DevAL usage from Application
 type DeviceAccessLayer interface {
-	ResetShift() error
 	PrintReceipt(Receipt) error
 	PingDevice() error
 }
 
-// ErrCannotConnect describes DevAL failures
-var ErrCannotConnect = errors.New("Device Access Layer is unavailable")
+// Errors for DevAL failures
+var (
+	ErrCannotConnect              = errors.New("Cash Register Device is unable to connect")
+	ErrSetupFailure               = errors.New("Connection setup failed")
+	ErrLoginFailure               = errors.New("Operator login failed")
+	ErrShiftCloseFailure          = errors.New("Shift closing failed")
+	ErrShiftOpenFailure           = errors.New("Shift opening failed")
+	ErrReceiptCreationFailure     = errors.New("Receipt opening failed")
+	ErrReceiptRegistrationFailure = errors.New("Receipt registration failed")
+	ErrTotalRegistrationFailure   = errors.New("Total registration failed")
+	ErrPaymentSetFailure          = errors.New("Payment method set failed")
+	ErrReceiptCloseFailure        = errors.New("Receipt close failed")
+	ErrUnableToGetFiscalData      = errors.New("Unable to get fiscal data")
+	ErrCannotDisconnect           = errors.New("Cash Register Device in unable to disconnect")
+)
 
 // Application is responsible for all logics and communicates with other layers
 type Application struct {

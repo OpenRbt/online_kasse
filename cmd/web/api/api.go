@@ -17,6 +17,11 @@ type WebServer struct {
 	application app.IncomeRegistration
 }
 
+// Ping answers on any valid GET request as OK (code 200)
+func (server *WebServer) Ping(ctx *fasthttp.RequestCtx) {
+	ctx.SetStatusCode(fasthttp.StatusOK)
+}
+
 // PushReceipt pushes new Receipt to Application
 func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	currentReceipt := app.NewReceipt()
@@ -55,6 +60,8 @@ func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	log.Info("API got new receipt")
 
 	server.application.RegisterReceipt(currentReceipt)
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
 // Start initializes Web Server, starts application and begins serving
@@ -63,6 +70,7 @@ func (server *WebServer) Start(errc chan<- error) {
 
 	router := fasthttprouter.New()
 	router.PUT("/:post/:sum/:iscard", server.PushReceipt)
+	router.GET("/ping_kasse", server.Ping)
 
 	port := ":443"
 
