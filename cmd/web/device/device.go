@@ -111,7 +111,6 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Price)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_VAT18)
 
 	// Set the service tags
 	fptr.SetParam(1212, 4)
