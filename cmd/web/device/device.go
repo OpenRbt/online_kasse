@@ -102,10 +102,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	// Stage 5: Open receipt
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE, fptr10.LIBFPTR_RT_SELL)
-	if err := fptr.OpenReceipt(); err != nil {
-		log.Info(err)
-		return app.ErrReceiptCreationFailure
-	}
+	fptr.OpenReceipt()
 
 	// Stage 6: Register the service or commodity
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
