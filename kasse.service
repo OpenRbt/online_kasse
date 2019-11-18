@@ -1,0 +1,15 @@
+[Unit]
+Description=Online Kasse Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/sudo /home/pi/DiaProjects/online_kasse/cmd/web/main
+WorkingDirectory=/home/pi/DiaProjects/online_kasse/cmd/web
+StandardOutput=inherit
+StandardInput=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+
