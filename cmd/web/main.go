@@ -2,6 +2,7 @@ package main
 
 import (
 	"sync"
+	"time"
 
 	"github.com/DiaElectronics/online_kasse/cmd/web/api"
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
@@ -13,6 +14,8 @@ import (
 var log = structlog.New()
 
 func run(errc chan<- error) {
+	time.Sleep(time.Second * 10)
+
 	var mutex sync.Mutex
 	db, err := dal.NewPostgresDAL("kaznachey", "RfpyfxtqAF", "localhost:5432")
 	if err != nil {
