@@ -114,10 +114,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	fptr.SetParam(1212, 4)
 	fptr.SetParam(1214, 1)
 
-	if err := fptr.Registration(); err != nil {
-		log.Info(err)
-		return app.ErrReceiptRegistrationFailure
-	}
+	fptr.Registration()
 
 	// Stage 7: Register the total
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_SUM, data.Price)
