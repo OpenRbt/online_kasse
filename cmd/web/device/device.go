@@ -136,14 +136,14 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 		log.Info(fptr.ErrorDescription())
 		return app.ErrReceiptCloseFailure
 	}
-
-	// Stage 10: If Stage 9 failed - recover the receipt
-	if !fptr.GetParamBool(fptr10.LIBFPTR_PARAM_DOCUMENT_CLOSED) {
-		log.Info("Receipt can't be closed - recovering...")
-		_ = fptr.CancelReceipt()
-		return app.ErrReceiptCloseFailure
-	}
-
+	/*
+		// Stage 10: If Stage 9 failed - recover the receipt
+		if !fptr.GetParamBool(fptr10.LIBFPTR_PARAM_DOCUMENT_CLOSED) {
+			log.Info("Receipt can't be closed - recovering...")
+			_ = fptr.CancelReceipt()
+			return app.ErrReceiptCloseFailure
+		}
+	*/
 	// Stage 11: Check the printing process
 	if !fptr.GetParamBool(fptr10.LIBFPTR_PARAM_DOCUMENT_PRINTED) {
 		fptr.ContinuePrint()
