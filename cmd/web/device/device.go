@@ -118,10 +118,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	// Stage 7: Register the total
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_SUM, data.Price)
-	if err := fptr.ReceiptTotal(); err != nil {
-		log.Info(err)
-		return app.ErrTotalRegistrationFailure
-	}
+	fptr.ReceiptTotal()
 
 	// Stage 8: Set the payment method
 	if data.IsBankCard {
@@ -131,10 +128,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	}
 
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Price)
-	if err := fptr.Payment(); err != nil {
-		log.Info(err)
-		return app.ErrPaymentSetFailure
-	}
+	fptr.Payment()
 
 	// Stage 9: Close the receipt
 	_ = fptr.CloseReceipt()
