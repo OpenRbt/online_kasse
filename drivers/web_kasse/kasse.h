@@ -71,7 +71,7 @@ class Kasse {
 		libfptr_open_receipt(fptr);
 
 		// Stage 6: Register the service or commodity
-		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, "Car wash");
+		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, L"Car wash");
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_PRICE, double(sum));
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_QUANTITY, 1.0);
 		libfptr_set_param_int(fptr, LIBFPTR_PARAM_TAX_TYPE, LIBFPTR_TAX_NO);
