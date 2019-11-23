@@ -5,7 +5,7 @@
 
 class Kasse {
     public:
-    // PrintReceipt must return "PRINTED" if no errors, or "FAIL:" if there are errors 
+    // PrintReceipt must return "PRINTED" if no errors, or "FAIL:" if there are errors
     std::string PrintReceipt(int sum, int card, int post) {
 		printf("New receipt accepted by driver\n");
 
@@ -30,7 +30,7 @@ class Kasse {
 		printf("Connection to device opened\n");
 
 		// Stage 3: Register the responsible person and log in
-		libfptr_set_param_str(fptr, 1021, L"Kanatnikov A.V.");
+		libfptr_set_param_str(fptr, 1021, L"Канатников А.В.");
 		libfptr_set_param_str(fptr, 1203, L"5401199801");
 		libfptr_operator_login(fptr);
 		/*
@@ -72,7 +72,7 @@ class Kasse {
 		libfptr_open_receipt(fptr);
 
 		// Stage 6: Register the service or commodity
-		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, L"Car wash");
+		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, L"АВТОМОЙКА");
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_PRICE, double(sum));
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_QUANTITY, 1.0);
 		libfptr_set_param_int(fptr, LIBFPTR_PARAM_TAX_TYPE, LIBFPTR_TAX_NO);
