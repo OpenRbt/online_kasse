@@ -9,47 +9,62 @@
 #include <netinet/in.h>
 #include <string.h>
 
+#define _MODE_WAITING_FOR_TOKEN 1
+#define _MODE_KEY_READING 2
+#define _MODE_VALUE_READING 3
+
 class HttpParameters {
 private:
     std::map<std::string, std::string> values;
 public:
     void SetValue(std::string key, std::string value) {
         values[key] = value;
+        printf("key:%s, val:%s\n", key.c_str(), value.c_str());
     }
     std::string GetValue(std::string key) {
         return values[key];
     }
+    
+    void split(char * src) {
+        int i;
+        
+        std::string key;
+        std::string value;
+        
+        int N = strlen(src);
+        int mode = _MODE_WAITING_FOR_TOKEN;
+        
+        for(i=0; i < N; i++) { 
+            char k = src[i];
+            if (mode == _MODE_WAITING_FOR_TOKEN) {
+                if (k=='&' || k=='?') {
+                    key = "";
+                    mode = _MODE_KEY_READING;
+                }
+            } else if (mode == _MODE_KEY_READING) {
+                if (k=='=') {
+                    value = "";
+                    mode = _MODE_VALUE_READING;
+                } else {
+                    key = key + k;
+                }
+            } else if (mode == _MODE_VALUE_READING) {
+                if (k=='&' || k=='\n' || k=='\r') {
+                    SetValue(key, value);
+                    key = "";
+                    mode = _MODE_KEY_READING;
+                } else {
+                    value = value + src[i];
+                }
+            }            
+        }
+    }
+    
     void Parse(char * request) {
         printf("parse called...\n");
-    }
+        split(request);
+    }  
 };
-
-/*
- char **split( char **result, char *working, const char *src, const char *delim)
-    {
-        int i;
-
-        strcpy(working, src); // working will get chppped up instead of src 
-        char *p=strtok(working, delim);
-        for(i=0; p!=NULL && i < (MX_SPLIT -1); i++, p=strtok(NULL, delim) )
-        {
-            result[i]=p;
-            result[i+1]=NULL;  // mark the end of result array
-        }
-        return result;
-    }
-
-    void foo(const char *somestring)
-    {
-       int i=0;
-       char *result[MX_SPLIT]={NULL};
-       char working[256]={0x0}; // assume somestring is never bigger than 256 - a weak assumption
-       char mydelim[]="!@#$%^&*()_-";
-       split(result, working, somestring, mydelim);
-       while(result[i]!=NULL)
-          printf("token # %d=%s\n", i, result[i]);
-    }
-*/
     
 class SimpleServer {
     int port;
