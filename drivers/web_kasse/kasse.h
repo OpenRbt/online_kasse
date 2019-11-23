@@ -33,13 +33,14 @@ class Kasse {
 		libfptr_set_param_str(fptr, 1021, L"Kanatnikov A.V.");
 		libfptr_set_param_str(fptr, 1203, L"5401199801");
 		libfptr_operator_login(fptr);
+		/*
 		if (errorCode != 0) {
 			printf("Operator login failure\n");
 			libfptr_close(fptr);
 			libfptr_destroy(&fptr);
 			return "FAIL: OPERATOR FAILURE";
 		}
-
+		*/
 		// Stage 4: Check the shift
 		libfptr_open_shift(fptr);
 		errorCode = libfptr_error_code(fptr);
