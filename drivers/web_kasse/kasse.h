@@ -16,7 +16,7 @@ class Kasse {
 
 		// Step 1: Configure connection to device
 		libfptr_set_single_setting(fptr, LIBFPTR_SETTING_PORT, std::to_wstring(LIBFPTR_PORT_USB).c_str());
-		libfptr_set_single_setting(fptr, LIBFPTR_SETTING_MODEL, LIBFPTR_MODEL_KAZNACHEY_FA);
+		libfptr_set_single_setting(fptr, LIBFPTR_SETTING_MODEL, std::to_wstring(LIBFPTR_MODEL_KAZNACHEY_FA).c_str());
 		libfptr_apply_single_settings(fptr);
 
 		// Step 2: Connect to device
@@ -30,7 +30,7 @@ class Kasse {
 		printf("Connection to device opened\n");
 
 		// Stage 3: Register the responsible person and log in
-		libfptr_set_param_str(fptr, 1021, L"Канатников А.В.");
+		libfptr_set_param_str(fptr, 1021, L"Kanatnikov A.V.");
 		libfptr_set_param_str(fptr, 1203, L"5401199801");
 		libfptr_operator_login(fptr);
 		if (errorCode != 0) {
@@ -48,7 +48,7 @@ class Kasse {
 		if (errorCode == 68 || errorCode == 141) {
 			printf("Shift expired - closing and reopening\n");
 
-			libfptr_set_param_str(fptr, LIBFPTR_PARAM_REPORT_TYPE, LIBFPTR_RT_CLOSE_SHIFT);
+			libfptr_set_param_str(fptr, LIBFPTR_PARAM_REPORT_TYPE, std::to_wstring(LIBFPTR_RT_CLOSE_SHIFT).c_str());
 			libfptr_report(fptr);
 			if (errorCode != 0) {
 				printf("Shift close failed\n");
@@ -71,7 +71,7 @@ class Kasse {
 		libfptr_open_receipt(fptr);
 
 		// Stage 6: Register the service or commodity
-		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля");
+		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, "Car wash");
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_PRICE, double(sum));
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_QUANTITY, 1.0);
 		libfptr_set_param_int(fptr, LIBFPTR_PARAM_TAX_TYPE, LIBFPTR_TAX_NO);

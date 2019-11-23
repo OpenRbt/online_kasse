@@ -1,3 +1,3 @@
 #!/bin/bash
 
-g++ -o kasse.exe main.cpp -lpthread
+g++ -o kasse.exe main.cpp -lpthread -lfptr10
