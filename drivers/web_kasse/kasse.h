@@ -29,14 +29,14 @@ class Kasse {
 		}
 		fprintf(stderr, "Connection to device opened\n");
 		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code in connection: %d", errorCode);
+		fprintf(stderr, "Error code in connection: %d\n", errorCode);
 
 		// Stage 3: Register the responsible person and log in
 		libfptr_set_param_str(fptr, 1021, L"Канатников А.В.");
 		libfptr_set_param_str(fptr, 1203, L"5401199801");
 		libfptr_operator_login(fptr);
 		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code in operator login: %d", errorCode);
+		fprintf(stderr, "Error code in operator login: %d\n", errorCode);
 		/*
 		if (errorCode != 0) {
 			printf("Operator login failure\n");
@@ -48,7 +48,13 @@ class Kasse {
 		// Stage 4: Check the shift
 		libfptr_open_shift(fptr);
 		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code in shift check: %d", errorCode);
+		fprintf(stderr, "Error code in shift open: %d\n", errorCode);
+
+		// Stage 5: Open receipt
+		libfptr_set_param_int(fptr, LIBFPTR_PARAM_RECEIPT_TYPE, LIBFPTR_RT_SELL);
+		libfptr_open_receipt(fptr);
+		errorCode = libfptr_error_code(fptr);
+		fprintf(stderr, "Error code in open receipt: %d\n", errorCode);
 
 		// If shift expired (was more than 24 hours long) - close it and open again
 		if (errorCode == 68 || errorCode == 141) {
@@ -71,12 +77,11 @@ class Kasse {
 				return "FAIL: SHIFT OPEN FAILURE";
 			}
 		}
-
-		// Stage 5: Open receipt
+	
 		libfptr_set_param_int(fptr, LIBFPTR_PARAM_RECEIPT_TYPE, LIBFPTR_RT_SELL);
 		libfptr_open_receipt(fptr);
 		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code in open receipt: %d", errorCode);
+		fprintf(stderr, "Error code in open receipt: %d\n", errorCode);
 
 		// Stage 6: Register the service or commodity
 		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, L"АВТОМОЙКА");
@@ -87,7 +92,7 @@ class Kasse {
 		libfptr_set_param_int(fptr, 1214, 1);
 		libfptr_registration(fptr);
 		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code in registration: %d", errorCode);
+		fprintf(stderr, "Error code in registration: %d\n", errorCode);
 
 		// Stage 7: Register total
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_SUM, double(sum));
@@ -105,14 +110,14 @@ class Kasse {
 		// Stage 9: Close the receipt
 		libfptr_close_receipt(fptr);
 		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code in close receipt: %d", errorCode);
+		fprintf(stderr, "Error code in close receipt: %d\n", errorCode);
 		while (libfptr_check_document_closed(fptr) < 0) {
 			fprintf(stderr, "Attempt to close document...\n");
 			continue;
 		}
 
 		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code before check document: %d", errorCode);
+		fprintf(stderr, "Error code before check document: %d\n", errorCode);
 
 		// Stage 10: Check document
 		if (libfptr_get_param_bool(fptr, LIBFPTR_PARAM_DOCUMENT_CLOSED) == 0) {
