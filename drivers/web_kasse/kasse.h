@@ -129,5 +129,8 @@ class Kasse {
         fprintf(stderr, "Receipt printed: sum: %d, is_card: %d, post: %d\n", sum, card, post);
         return "PRINTED";
     }
+	std::string Shift() {
+		return "SHIFTED";
+	}
 };
 #endif

@@ -9,6 +9,15 @@
 std::string ServerCallback(void * kassePtr, HttpParameters * parameters) {
     printf("request recieved\n");
     Kasse * kasse = (Kasse *) kassePtr;
+    std::string action = parameters->GetValue("act");
+    
+    // routes
+    // route: shift
+    if (action.compare("shift") == 0) {
+        return kasse->Shift();
+    }
+    
+    // default route
     int sum = atoi(parameters->GetValue("sum").c_str());    
     int card = atoi(parameters->GetValue("card").c_str());
     int post = atoi(parameters->GetValue("post").c_str());
