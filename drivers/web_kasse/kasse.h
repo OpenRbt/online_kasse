@@ -37,14 +37,7 @@ class Kasse {
 		libfptr_operator_login(fptr);
 		errorCode = libfptr_error_code(fptr);
 		fprintf(stderr, "Error code in operator login: %d\n", errorCode);
-		/*
-		if (errorCode != 0) {
-			printf("Operator login failure\n");
-			libfptr_close(fptr);
-			libfptr_destroy(&fptr);
-			return "FAIL: OPERATOR FAILURE";
-		}
-		*/
+
 		// Stage 4: Check the shift
 		libfptr_open_shift(fptr);
 		errorCode = libfptr_error_code(fptr);
@@ -62,20 +55,7 @@ class Kasse {
 
 			libfptr_set_param_str(fptr, LIBFPTR_PARAM_REPORT_TYPE, std::to_wstring(LIBFPTR_RT_CLOSE_SHIFT).c_str());
 			libfptr_report(fptr);
-			if (errorCode != 0) {
-				fprintf(stderr, "Shift close failed\n");
-				libfptr_close(fptr);
-				libfptr_destroy(&fptr);
-				return "FAIL: SHIFT CLOSE FAILURE";
-			}
-
 			libfptr_open_shift(fptr);
-			if (errorCode != 0) {
-				fprintf(stderr, "Shift open failed\n");
-				libfptr_close(fptr);
-				libfptr_destroy(&fptr);
-				return "FAIL: SHIFT OPEN FAILURE";
-			}
 		}
 	
 		libfptr_set_param_int(fptr, LIBFPTR_PARAM_RECEIPT_TYPE, LIBFPTR_RT_SELL);
