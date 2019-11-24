@@ -56,13 +56,13 @@ class Kasse {
 			libfptr_set_param_str(fptr, LIBFPTR_PARAM_REPORT_TYPE, std::to_wstring(LIBFPTR_RT_CLOSE_SHIFT).c_str());
 			libfptr_report(fptr);
 			libfptr_open_shift(fptr);
+
+			libfptr_set_param_int(fptr, LIBFPTR_PARAM_RECEIPT_TYPE, LIBFPTR_RT_SELL);
+			libfptr_open_receipt(fptr);
+			errorCode = libfptr_error_code(fptr);
+			fprintf(stderr, "Error code in open receipt: %d\n", errorCode);
 		}
 	
-		libfptr_set_param_int(fptr, LIBFPTR_PARAM_RECEIPT_TYPE, LIBFPTR_RT_SELL);
-		libfptr_open_receipt(fptr);
-		errorCode = libfptr_error_code(fptr);
-		fprintf(stderr, "Error code in open receipt: %d\n", errorCode);
-
 		// Stage 6: Register the service or commodity
 		libfptr_set_param_str(fptr, LIBFPTR_PARAM_COMMODITY_NAME, L"АВТОМОЙКА");
 		libfptr_set_param_double(fptr, LIBFPTR_PARAM_PRICE, double(sum));
