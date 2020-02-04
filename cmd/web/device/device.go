@@ -111,8 +111,10 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO)
 
 	// Set the service tags
+	// About the service provided (name and other information describing the service).
 	fptr.SetParam(1212, 4)
-	fptr.SetParam(1214, 1)
+	// Full payment, including taking into account advance payment (advance payment) at the time of transfer of the subject of calculation.
+	fptr.SetParam(1214, 4)
 
 	fptr.Registration()
 
