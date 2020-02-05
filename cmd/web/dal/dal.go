@@ -40,11 +40,19 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 
 // NewPostgresDAL constructs object of PostgresDAL
 func NewPostgresDAL(cfg Config) (*PostgresDAL, error) {
-	db := pg.Connect(&pg.Options{
-		User:     cfg.User,
-		Password: cfg.Password,
-		Addr:     cfg.Host,
-	})
+	var opt pg.Options
+	if cfg.User == "" {
+		opt = pg.Options{
+			Network: "unix",
+		}
+	} else {
+		opt = pg.Options{
+			User:     cfg.User,
+			Password: cfg.Password,
+			Addr:     cfg.Host,
+		}
+	}
+	db := pg.Connect(&opt)
 	db.AddQueryHook(dbLogger{})
 
 	err := createSchema(db)

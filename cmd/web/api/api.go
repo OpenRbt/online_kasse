@@ -79,7 +79,7 @@ func (server *WebServer) Start(errc chan<- error) {
 	router.GET("/ping_kasse", server.Ping)
 	router.GET("/info", server.Info)
 
-	port := ":443"
+	port := ":8443"
 
 	log.Info("Server is starting on port", port)
 	errc <- fasthttp.ListenAndServeTLS(port, "cert.pem", "key.pem", router.Handler)
