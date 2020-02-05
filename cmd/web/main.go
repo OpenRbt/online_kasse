@@ -21,6 +21,7 @@ var (
 func run(errc chan<- error) {
 	time.Sleep(time.Second * 10)
 
+	log.Info("flags", "dbuser", cfg.User, "dbpass", cfg.Password, "dbhost", cfg.Host)
 	var mutex sync.Mutex
 	var db app.DataAccessLayer
 	db, err := dal.NewPostgresDAL(cfg)

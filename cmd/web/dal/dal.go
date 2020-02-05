@@ -1,6 +1,8 @@
 package dal
 
 import (
+	"os/user"
+
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
@@ -42,7 +44,12 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 func NewPostgresDAL(cfg Config) (*PostgresDAL, error) {
 	var opt pg.Options
 	if cfg.User == "" {
+		u, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
 		opt = pg.Options{
+			User:    u.Username,
 			Network: "unix",
 		}
 	} else {
