@@ -27,6 +27,7 @@ func run(errc chan<- error) {
 	if err != nil {
 		if cfg.Host == "" && cfg.User == "" && cfg.Password == "" {
 			log.PrintErr(err)
+			log.Info("USING MEM DB")
 			db = memdb.New()
 		} else {
 			errc <- err
