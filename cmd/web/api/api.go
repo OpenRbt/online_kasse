@@ -22,6 +22,12 @@ func (server *WebServer) Ping(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 }
 
+// Info returns database information
+func (server *WebServer) Info(ctx *fasthttp.RequestCtx) {
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.SetBodyString(server.application.Info())
+}
+
 // PushReceipt pushes new Receipt to Application
 func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	currentReceipt := app.NewReceipt()
@@ -71,6 +77,7 @@ func (server *WebServer) Start(errc chan<- error) {
 	router := fasthttprouter.New()
 	router.PUT("/:post/:sum/:iscard", server.PushReceipt)
 	router.GET("/ping_kasse", server.Ping)
+	router.GET("/info", server.Info)
 
 	port := ":443"
 

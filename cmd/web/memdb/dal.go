@@ -22,8 +22,8 @@ type DB struct {
 }
 
 // New DB
-func New() (*DB, error) {
-	return &DB{receipt: []Receipt{}}, nil
+func New() *DB {
+	return &DB{receipt: []Receipt{}}
 }
 
 func makeAppReceipt(from Receipt) app.Receipt {

@@ -23,6 +23,13 @@ type PostgresDAL struct {
 	DataBase *pg.DB
 }
 
+// Config database connection configuration
+type Config struct {
+	User     string
+	Password string
+	Host     string
+}
+
 type dbLogger struct{}
 
 func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
@@ -32,11 +39,11 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 }
 
 // NewPostgresDAL constructs object of PostgresDAL
-func NewPostgresDAL(user string, password string, host string) (*PostgresDAL, error) {
+func NewPostgresDAL(cfg Config) (*PostgresDAL, error) {
 	db := pg.Connect(&pg.Options{
-		User:     user,
-		Password: password,
-		Addr:     host,
+		User:     cfg.User,
+		Password: cfg.Password,
+		Addr:     cfg.Host,
 	})
 	db.AddQueryHook(dbLogger{})
 
@@ -45,9 +52,9 @@ func NewPostgresDAL(user string, password string, host string) (*PostgresDAL, er
 		return nil, err
 	}
 	res := &PostgresDAL{
-		User:     user,
-		Password: password,
-		Host:     host,
+		User:     cfg.User,
+		Password: cfg.Password,
+		Host:     cfg.Host,
 		DataBase: db}
 
 	return res, nil
