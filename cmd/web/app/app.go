@@ -13,6 +13,7 @@ var log = structlog.New()
 type IncomeRegistration interface {
 	RegisterReceipt(*Receipt)
 	Start()
+	Info() string
 }
 
 // DataAccessLayer is an interface for DAL usage from Application
@@ -72,6 +73,11 @@ func (app *Application) RegisterReceipt(currentData *Receipt) {
 	log.Info("New receipt added to DB")
 }
 
+// Info returns database information
+func (app *Application) Info() string {
+	return app.DB.Info()
+}
+
 // NewApplication constructs Application
 func NewApplication(db DataAccessLayer, dev DeviceAccessLayer, errchannel chan<- error) *Application {
 	res := &Application{}
@@ -102,14 +108,21 @@ func (app *Application) loop() {
 				continue
 			}
 			log.Info("Receipt printed")
-
-			_, err = app.DB.UpdateStatus(receiptToProcess)
-			if err != nil {
-				log.Info("Error while updating a receipt")
-				continue
+			if app.DB.Info() == "memdb" {
+				_, err = app.DB.DeleteByID(receiptToProcess.ID)
+				if err != nil {
+					log.Info("Error while deleting a receipt")
+					continue
+				}
+				log.Info("Receipt deleted in DB")
+			} else {
+				_, err = app.DB.UpdateStatus(receiptToProcess)
+				if err != nil {
+					log.Info("Error while updating a receipt")
+					continue
+				}
+				log.Info("Receipt updated in DB")
 			}
-			log.Info("Receipt updated in DB")
-
 		} else {
 			needToSleep = true
 		}

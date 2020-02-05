@@ -23,5 +23,5 @@ var (
 )
 
 func init() {
-	db, _ = New()
+	db = New()
 }
