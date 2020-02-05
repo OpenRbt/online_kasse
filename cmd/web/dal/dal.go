@@ -226,3 +226,8 @@ func (t *PostgresDAL) GetByPost(current app.QueryData) (*app.ReceiptList, error)
 	convertedReceipts = makeAppReceiptSlice(foundReceipts)
 	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
 }
+
+// Info returns database information
+func (t *PostgresDAL) Info() string {
+	return "postgres"
+}

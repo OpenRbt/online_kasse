@@ -9,6 +9,7 @@ require (
 	github.com/klauspost/compress v1.4.0 // indirect
 	github.com/klauspost/cpuid v0.0.0-20180405133222-e7e905edc00e // indirect
 	github.com/onsi/gomega v1.4.2 // indirect
+	github.com/powerman/check v1.0.1
 	github.com/powerman/structlog v0.5.0
 	github.com/valyala/bytebufferpool v0.0.0-20160817181652-e746df99fe4a // indirect
 	github.com/valyala/fasthttp v0.0.0-20180831062205-5f6439b6df1c

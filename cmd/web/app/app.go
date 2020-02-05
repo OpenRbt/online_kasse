@@ -28,6 +28,7 @@ type DataAccessLayer interface {
 	UpdateStatus(Receipt) (bool, error)
 
 	DeleteByID(int64) (int64, error)
+	Info() string
 }
 
 // DeviceAccessLayer is an interface for DevAL usage from Application
@@ -50,6 +51,7 @@ var (
 	ErrReceiptCloseFailure        = errors.New("Receipt close failed")
 	ErrUnableToGetFiscalData      = errors.New("Unable to get fiscal data")
 	ErrCannotDisconnect           = errors.New("Cash Register Device in unable to disconnect")
+	ErrNotFound                   = errors.New("not found")
 )
 
 // Application is responsible for all logics and communicates with other layers
