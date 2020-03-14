@@ -13,6 +13,7 @@ var log = structlog.New()
 type IncomeRegistration interface {
 	RegisterReceipt(*Receipt)
 	Start()
+	Info() string
 }
 
 // DataAccessLayer is an interface for DAL usage from Application
@@ -28,6 +29,7 @@ type DataAccessLayer interface {
 	UpdateStatus(Receipt) (bool, error)
 
 	DeleteByID(int64) (int64, error)
+	Info() string
 }
 
 // DeviceAccessLayer is an interface for DevAL usage from Application
@@ -50,6 +52,7 @@ var (
 	ErrReceiptCloseFailure        = errors.New("Receipt close failed")
 	ErrUnableToGetFiscalData      = errors.New("Unable to get fiscal data")
 	ErrCannotDisconnect           = errors.New("Cash Register Device in unable to disconnect")
+	ErrNotFound                   = errors.New("not found")
 )
 
 // Application is responsible for all logics and communicates with other layers
@@ -68,6 +71,11 @@ func (app *Application) RegisterReceipt(currentData *Receipt) {
 		return
 	}
 	log.Info("New receipt added to DB")
+}
+
+// Info returns database information
+func (app *Application) Info() string {
+	return app.DB.Info()
 }
 
 // NewApplication constructs Application
@@ -100,14 +108,21 @@ func (app *Application) loop() {
 				continue
 			}
 			log.Info("Receipt printed")
-
-			_, err = app.DB.UpdateStatus(receiptToProcess)
-			if err != nil {
-				log.Info("Error while updating a receipt")
-				continue
+			if app.DB.Info() == "memdb" {
+				_, err = app.DB.DeleteByID(receiptToProcess.ID)
+				if err != nil {
+					log.Info("Error while deleting a receipt")
+					continue
+				}
+				log.Info("Receipt deleted in DB")
+			} else {
+				_, err = app.DB.UpdateStatus(receiptToProcess)
+				if err != nil {
+					log.Info("Error while updating a receipt")
+					continue
+				}
+				log.Info("Receipt updated in DB")
 			}
-			log.Info("Receipt updated in DB")
-
 		} else {
 			needToSleep = true
 		}

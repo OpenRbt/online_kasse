@@ -1,6 +1,8 @@
 package dal
 
 import (
+	"os/user"
+
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
@@ -23,6 +25,13 @@ type PostgresDAL struct {
 	DataBase *pg.DB
 }
 
+// Config database connection configuration
+type Config struct {
+	User     string
+	Password string
+	Host     string
+}
+
 type dbLogger struct{}
 
 func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
@@ -32,12 +41,25 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 }
 
 // NewPostgresDAL constructs object of PostgresDAL
-func NewPostgresDAL(user string, password string, host string) (*PostgresDAL, error) {
-	db := pg.Connect(&pg.Options{
-		User:     user,
-		Password: password,
-		Addr:     host,
-	})
+func NewPostgresDAL(cfg Config) (*PostgresDAL, error) {
+	var opt pg.Options
+	if cfg.User == "" {
+		u, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
+		opt = pg.Options{
+			User:    u.Username,
+			Network: "unix",
+		}
+	} else {
+		opt = pg.Options{
+			User:     cfg.User,
+			Password: cfg.Password,
+			Addr:     cfg.Host,
+		}
+	}
+	db := pg.Connect(&opt)
 	db.AddQueryHook(dbLogger{})
 
 	err := createSchema(db)
@@ -45,9 +67,9 @@ func NewPostgresDAL(user string, password string, host string) (*PostgresDAL, er
 		return nil, err
 	}
 	res := &PostgresDAL{
-		User:     user,
-		Password: password,
-		Host:     host,
+		User:     cfg.User,
+		Password: cfg.Password,
+		Host:     cfg.Host,
 		DataBase: db}
 
 	return res, nil
@@ -225,4 +247,9 @@ func (t *PostgresDAL) GetByPost(current app.QueryData) (*app.ReceiptList, error)
 
 	convertedReceipts = makeAppReceiptSlice(foundReceipts)
 	return &app.ReceiptList{Receipts: convertedReceipts, Total: len(convertedReceipts)}, nil
+}
+
+// Info returns database information
+func (t *PostgresDAL) Info() string {
+	return "postgres"
 }

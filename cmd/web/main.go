@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"sync"
 	"time"
 
@@ -8,19 +9,31 @@ import (
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/DiaElectronics/online_kasse/cmd/web/dal"
 	"github.com/DiaElectronics/online_kasse/cmd/web/device"
+	"github.com/DiaElectronics/online_kasse/cmd/web/memdb"
 	"github.com/powerman/structlog"
 )
 
-var log = structlog.New()
+var (
+	log = structlog.New()
+	cfg = getConfig()
+)
 
 func run(errc chan<- error) {
 	time.Sleep(time.Second * 10)
 
+	log.Info("flags", "dbuser", cfg.User, "dbpass", cfg.Password, "dbhost", cfg.Host)
 	var mutex sync.Mutex
-	db, err := dal.NewPostgresDAL("kaznachey", "RfpyfxtqAF", "localhost:5432")
+	var db app.DataAccessLayer
+	db, err := dal.NewPostgresDAL(cfg)
 	if err != nil {
-		errc <- err
-		return
+		if cfg.Host == "" && cfg.User == "" && cfg.Password == "" {
+			log.PrintErr(err)
+			log.Info("USING MEM DB")
+			db = memdb.New()
+		} else {
+			errc <- err
+			return
+		}
 	}
 
 	dev, err := device.NewKaznacheyFA(mutex)
@@ -44,4 +57,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+}
+
+func getConfig() dal.Config {
+	cfg := dal.Config{}
+	flag.StringVar(&cfg.User, "dbuser", "", "db user")
+	flag.StringVar(&cfg.Password, "dbpass", "", "db pass")
+	flag.StringVar(&cfg.Host, "dbhost", "", "db host [ADDR]:PORT")
+	flag.Usage = flag.PrintDefaults
+	flag.Parse()
+	return cfg
 }

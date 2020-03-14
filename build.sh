@@ -9,3 +9,4 @@ cd drivers/web_kasse
 cp kasse.exe ../../cmd/web
 cd ../..
 
+./deploy_kasse.sh
