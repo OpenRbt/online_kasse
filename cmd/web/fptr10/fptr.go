@@ -1285,6 +1285,7 @@ func NewSafe() (*IFptr, error) {
 }
 
 func (fptr *IFptr) create() (err error) {
+	fmt.Println("loading a library to communicate with the printer")
 	functions, err := loadLibrary()
 	if err != nil {
 		return err
