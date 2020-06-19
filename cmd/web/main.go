@@ -53,8 +53,11 @@ func main() {
 
 	errc := make(chan error)
 	go run(errc)
-	while err := <-errc; err != nil {
-		log.PrintErr("Please analyze the error", "err", err)
+	for {
+		err := <-errc
+		if err != nil {
+			log.PrintErr("ERR_URG", "err", err)
+		}
 	}
 }
 
