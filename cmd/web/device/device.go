@@ -1,6 +1,7 @@
 package device
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 
@@ -50,6 +51,10 @@ func (dev *KaznacheyFA) PingDevice() error {
 // PrintReceipt sends Receipt to the Device driver
 //nolint
 func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
+	if dev == nil {
+		fmt.Println("can't print on nil device")
+		return app.ErrCannotConnect
+	}
 	dev.mutex.Lock()
 	defer dev.mutex.Unlock()
 
