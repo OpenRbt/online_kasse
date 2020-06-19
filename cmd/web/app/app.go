@@ -93,8 +93,9 @@ func (app *Application) loop() {
 	needToSleep := false
 	for {
 		listToProcess, err := app.DB.GetUnprocessedOnly(QueryData{Limit: 1, LastID: 0})
-		if listToProcess == nil || err != nil {
+		if listToProcess == nil || err != nil || app.Device == nil {
 			log.Info("List of unprocessed receipts is empty")
+			time.Sleep(time.Second * 5)
 			continue
 		}
 
