@@ -21,7 +21,7 @@ var (
 func run(errc chan<- error) {
 	time.Sleep(time.Second * 10)
 
-	log.Info("flags", "dbuser", cfg.User, "dbpass", cfg.Password, "dbhost", cfg.Host)
+	log.Info("flags", "", "dbuser", cfg.User, "dbpass", cfg.Password, "dbhost", cfg.Host)
 	var mutex sync.Mutex
 	var db app.DataAccessLayer
 	db, err := dal.NewPostgresDAL(cfg)
@@ -49,7 +49,7 @@ func run(errc chan<- error) {
 }
 
 func main() {
-	log.Info("Server is preparing to start...")
+	log.Info("Server is preparing to start ...")
 
 	errc := make(chan error)
 	go run(errc)
