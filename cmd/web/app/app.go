@@ -106,6 +106,7 @@ func (app *Application) loop() {
 			err := app.Device.PrintReceipt(receiptToProcess)
 			if err != nil {
 				log.Info("Error while printing a receipt")
+				time.Sleep(time.Second * 5)
 				continue
 			}
 			log.Info("Receipt printed")
