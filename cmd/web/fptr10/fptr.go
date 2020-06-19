@@ -1287,7 +1287,7 @@ func NewSafe() (*IFptr, error) {
 func (fptr *IFptr) create() (err error) {
 	functions, err := loadLibrary()
 	if err != nil {
-		return
+		return err
 	}
 	fptr.nativePointer = C.libfptr_handle(nil)
 	C.bridge_libfptr_create_func(functions.libfptr_create, &fptr.nativePointer)
