@@ -23,6 +23,10 @@ func (dev *KaznacheyFA) PingDevice() error {
 	defer dev.mutex.Unlock()
 
 	fptr := fptr10.New()
+	if fptr == nil {
+		return app.ErrCannotConnect
+	}
+	log.Info("device is initialized")
 	defer fptr.Destroy()
 
 	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_KAZNACHEY_FA))

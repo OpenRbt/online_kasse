@@ -60,7 +60,7 @@ func run(errc chan<- error) {
 }
 
 func main() {
-	log.Info("Server is preparing to start ...", "+")
+	log.Info("Server is preparing to start ...")
 
 	errc := make(chan error)
 	go run(errc)
