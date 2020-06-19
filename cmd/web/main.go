@@ -36,7 +36,7 @@ func run(errc chan<- error) {
 		}
 	}
 
-	dev, err := device.NewKaznacheyFA(mutex)
+	dev, err := device.NewKaznacheyFA(&mutex)
 	if err != nil {
 		errc <- err
 		return

@@ -13,7 +13,7 @@ var log = structlog.New()
 
 // KaznacheyFA representes object of Device, connected by USB
 type KaznacheyFA struct {
-	mutex sync.Mutex
+	mutex *sync.Mutex
 }
 
 // PingDevice checks connection to the Device
@@ -180,7 +180,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 }
 
 // NewKaznacheyFA constructs new KaznacheyFA object
-func NewKaznacheyFA(mut sync.Mutex) (*KaznacheyFA, error) {
+func NewKaznacheyFA(mut *sync.Mutex) (*KaznacheyFA, error) {
 	res := &KaznacheyFA{}
 	res.mutex = mut
 
