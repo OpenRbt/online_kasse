@@ -53,10 +53,9 @@ func main() {
 
 	errc := make(chan error)
 	go run(errc)
-	if err := <-errc; err != nil {
-		log.Fatal(err)
+	while err := <-errc; err != nil {
+		log.PrintErr("Please analyze the error", "err", err)
 	}
-
 }
 
 func getConfig() dal.Config {
