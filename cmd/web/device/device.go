@@ -66,6 +66,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 		log.Info(err)
 		return app.ErrCannotConnect
 	}
+	defer fptr.Close()
 
 	log.Info("Connection to Cash Register Device opened")
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"sync"
 	"time"
@@ -14,14 +15,14 @@ import (
 )
 
 var (
-	log = structlog.New()
-	cfg = getConfig()
+	log         = structlog.New()
+	cfg         = getConfig()
+	errNoDevice = errors.New("no device found")
 )
 
 func run(errc chan<- error) {
 	time.Sleep(time.Second * 10)
 
-	log.Info("flags", "", "dbuser", cfg.User, "dbpass", cfg.Password, "dbhost", cfg.Host)
 	var mutex sync.Mutex
 	var db app.DataAccessLayer
 	db, err := dal.NewPostgresDAL(cfg)
@@ -42,6 +43,16 @@ func run(errc chan<- error) {
 		return
 	}
 
+	if dev == nil {
+		log.PrintErr("can't find a printer, just demo mode", err, errNoDevice)
+	}
+
+	err = dev.PingDevice()
+	if err != nil {
+		log.PrintErr("can't find a printer, running a demo mode", err, errNoDevice)
+		dev = nil
+	}
+
 	application := app.NewApplication(db, dev, errc)
 	server := api.NewWebServer(application)
 
@@ -49,7 +60,7 @@ func run(errc chan<- error) {
 }
 
 func main() {
-	log.Info("Server is preparing to start ...")
+	log.Info("Server is preparing to start ...", "+")
 
 	errc := make(chan error)
 	go run(errc)
