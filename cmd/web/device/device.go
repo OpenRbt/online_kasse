@@ -106,9 +106,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	// If the shift was already opened - just do nothing
 	fptr.OpenShift()
 	errorCode := fptr.ErrorCode()
-	if errorCode != 0 {
-		log.Debug("err OpenShift", "code", errorCode)
-	}
+
 	// If shift expired (was more than 24 hours long) - close it and open again
 	if errorCode == 68 || errorCode == 141 {
 		log.Info("Shift expired - closing and reopening")
