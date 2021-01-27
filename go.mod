@@ -11,7 +11,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/klauspost/compress v1.4.0 // indirect
 	github.com/klauspost/cpuid v0.0.0-20180405133222-e7e905edc00e // indirect
-	github.com/mtgroupit/mtmb-extauthapi/v6 v6.9.0
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/powerman/check v1.1.0
