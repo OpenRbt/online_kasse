@@ -81,7 +81,7 @@ func (server *WebServer) Start(errc chan<- error) {
 
 	port := ":8443"
 
-	log.Info("Server is starting on port", port)
+	log.Info("Server is starting", "port", port)
 	errc <- fasthttp.ListenAndServeTLS(port, "cert.pem", "key.pem", router.Handler)
 }
 

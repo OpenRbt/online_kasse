@@ -30,6 +30,7 @@ type Config struct {
 	User     string
 	Password string
 	Host     string
+	Database string
 }
 
 type dbLogger struct{}
@@ -57,6 +58,7 @@ func NewPostgresDAL(cfg Config) (*PostgresDAL, error) {
 			User:     cfg.User,
 			Password: cfg.Password,
 			Addr:     cfg.Host,
+			Database: cfg.Database,
 		}
 	}
 	db := pg.Connect(&opt)

@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/DiaElectronics/online_kasse/cmd/web/svcstorage"
+
 	"github.com/DiaElectronics/online_kasse/cmd/web/api"
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/DiaElectronics/online_kasse/cmd/web/dal"
@@ -37,7 +39,7 @@ func run(errc chan<- error) {
 		}
 	}
 
-	dev, err := device.NewKaznacheyFA(&mutex)
+	dev, err := device.NewKaznacheyFA(&mutex, svcstorage.NewClient())
 	if err != nil {
 		errc <- err
 		return
@@ -77,6 +79,7 @@ func getConfig() dal.Config {
 	flag.StringVar(&cfg.User, "dbuser", "", "db user")
 	flag.StringVar(&cfg.Password, "dbpass", "", "db pass")
 	flag.StringVar(&cfg.Host, "dbhost", "", "db host [ADDR]:PORT")
+	flag.StringVar(&cfg.Database, "dbname", "", "db name")
 	flag.Usage = flag.PrintDefaults
 	flag.Parse()
 	return cfg
