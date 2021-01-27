@@ -67,6 +67,9 @@ func newConfig(cfg *model.KasseConfig) (*device.Config, error) {
 	default:
 		return nil, errors.New("unknown tax")
 	}
+	if cfg.Cashier != "" && len(cfg.CashierINN) != 12 {
+		return nil, errors.New("cashier INN required")
+	}
 	return &device.Config{
 		Cashier:         cfg.Cashier,
 		CashierINN:      cfg.CashierINN,
