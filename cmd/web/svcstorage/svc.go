@@ -14,11 +14,6 @@ import (
 	"github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
 )
 
-var (
-	errNoHost           = errors.New("endpoint must contain host")
-	errWrongUUIDVersion = errors.New("wrong UUID version")
-)
-
 // Client for storage.
 type Client struct {
 	*client.Storage

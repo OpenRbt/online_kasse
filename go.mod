@@ -6,7 +6,6 @@ require (
 	github.com/DiaElectronics/lea-central-wash v0.0.0-20210127085345-698bf9ba0c12
 	github.com/buaazp/fasthttprouter v0.1.1
 	github.com/go-openapi/runtime v0.19.6
-	github.com/go-openapi/swag v0.19.5
 	github.com/go-pg/pg v8.0.4+incompatible
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/klauspost/compress v1.4.0 // indirect
