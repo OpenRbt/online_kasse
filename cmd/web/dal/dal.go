@@ -10,11 +10,13 @@ import (
 
 // Receipt represents generic Receipt object in DAL
 type Receipt struct {
-	ID          int64
-	Post        int64
-	Price       float64
-	IsBankCard  int8
-	IsProcessed int8
+	ID             int64
+	Post           int64
+	Price          float64
+	Cash           float64
+	Electronically float64
+	IsBankCard     int8
+	IsProcessed    int8
 }
 
 // PostgresDAL represents data for connection to Data base
@@ -78,18 +80,19 @@ func NewPostgresDAL(cfg Config) (*PostgresDAL, error) {
 }
 
 func makeAppReceipt(from Receipt) app.Receipt {
-	var appReceipt app.Receipt
-
-	appReceipt.Price = from.Price
-	appReceipt.ID = from.ID
-	appReceipt.Post = from.Post
-
-	if from.IsBankCard == 1 {
-		appReceipt.IsBankCard = true
-	} else if from.IsBankCard == -1 {
-		appReceipt.IsBankCard = false
+	appReceipt := app.Receipt{
+		ID:             from.ID,
+		Post:           from.Post,
+		Electronically: from.Electronically,
+		Cash:           from.Cash,
 	}
-
+	if from.Price > 0 {
+		if from.IsBankCard == 1 {
+			appReceipt.Electronically = from.Price
+		} else if from.IsBankCard == -1 {
+			appReceipt.Cash = from.Price
+		}
+	}
 	return appReceipt
 }
 
@@ -114,30 +117,26 @@ func createSchema(db *pg.DB) error {
 			return err
 		}
 	}
-
-	return nil
+	_, err := db.Exec("ALTER TABLE receipts ADD COLUMN IF NOT EXISTS electronically double precision")
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec("ALTER TABLE receipts ADD COLUMN IF NOT EXISTS cash double precision")
+	return err
 }
 
 // Create inserts new Receipt into DB
 func (t *PostgresDAL) Create(current *app.Receipt) (*app.Receipt, error) {
 	var target Receipt
-	target.Price = current.Price
+	target.Cash = current.Cash
+	target.Electronically = current.Electronically
 	target.Post = current.Post
-
-	if current.IsBankCard {
-		target.IsBankCard = 1
-	} else {
-		target.IsBankCard = -1
-	}
-
 	target.IsProcessed = -1
 
 	err := t.DataBase.Insert(&target)
-
 	if err != nil {
 		return nil, err
 	}
-
 	return current, nil
 }
 
@@ -160,14 +159,9 @@ func (t *PostgresDAL) UpdateStatus(current app.Receipt) (bool, error) {
 	var target Receipt
 	target.ID = current.ID
 	target.IsProcessed = 1
-	target.Price = current.Price
+	target.Cash = current.Cash
+	target.Electronically = current.Electronically
 	target.Post = current.Post
-
-	if current.IsBankCard {
-		target.IsBankCard = 1
-	} else {
-		target.IsBankCard = -1
-	}
 
 	err := t.DataBase.Update(&target)
 
@@ -207,6 +201,7 @@ func (t *PostgresDAL) GetUnprocessedOnly(current app.QueryData) (*app.ReceiptLis
 }
 
 // GetWithBankCards returns a list of Receipts paid by Bank Cards only
+// TODO FIXME
 func (t *PostgresDAL) GetWithBankCards(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 	var convertedReceipts []app.Receipt
@@ -222,6 +217,7 @@ func (t *PostgresDAL) GetWithBankCards(current app.QueryData) (*app.ReceiptList,
 }
 
 // GetWithCash returns a list of Receipts paid by Cash only
+// TODO FIXME
 func (t *PostgresDAL) GetWithCash(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 	var convertedReceipts []app.Receipt
