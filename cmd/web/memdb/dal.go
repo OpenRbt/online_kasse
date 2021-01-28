@@ -8,13 +8,14 @@ import (
 
 // Receipt represents generic Receipt object in DAL
 type Receipt struct {
-	ID          int64
-	Post        int64
-	Price       float64
-	IsBankCard  int8
-	IsProcessed int8
+	ID             int64
+	Post           int64
+	Cash           float64
+	Electronically float64
+	IsProcessed    int8
 }
 
+// DB memdb
 type DB struct {
 	receipt   []Receipt
 	mutex     sync.Mutex
@@ -27,19 +28,12 @@ func New() *DB {
 }
 
 func makeAppReceipt(from Receipt) app.Receipt {
-	var appReceipt app.Receipt
-
-	appReceipt.Price = from.Price
-	appReceipt.ID = from.ID
-	appReceipt.Post = from.Post
-
-	if from.IsBankCard == 1 {
-		appReceipt.IsBankCard = true
-	} else if from.IsBankCard == -1 {
-		appReceipt.IsBankCard = false
+	return app.Receipt{
+		ID:             from.ID,
+		Post:           from.Post,
+		Electronically: from.Electronically,
+		Cash:           from.Cash,
 	}
-
-	return appReceipt
 }
 
 func makeAppReceiptSlice(from []Receipt) []app.Receipt {
@@ -55,17 +49,14 @@ func makeAppReceiptSlice(from []Receipt) []app.Receipt {
 
 // Create inserts new Receipt into DB
 func (t *DB) Create(current *app.Receipt) (*app.Receipt, error) {
-	var target Receipt
-	target.Price = current.Price
-	target.Post = current.Post
-
-	if current.IsBankCard {
-		target.IsBankCard = 1
-	} else {
-		target.IsBankCard = -1
+	target := Receipt{
+		ID:             current.ID,
+		Post:           current.Post,
+		Electronically: current.Electronically,
+		Cash:           current.Cash,
+		IsProcessed:    -1,
 	}
 
-	target.IsProcessed = -1
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 	t.receiptID++
@@ -87,7 +78,7 @@ func (t *DB) DeleteByID(ID int64) (int64, error) {
 }
 
 func (t *DB) findByID(id int64) int64 {
-	for i, _ := range t.receipt {
+	for i := range t.receipt {
 		if t.receipt[i].ID == id {
 			return int64(i)
 		}
@@ -97,16 +88,12 @@ func (t *DB) findByID(id int64) int64 {
 
 // UpdateStatus changes IsProcessed field to true
 func (t *DB) UpdateStatus(current app.Receipt) (bool, error) {
-	var target Receipt
-	target.ID = current.ID
-	target.IsProcessed = 1
-	target.Price = current.Price
-	target.Post = current.Post
-
-	if current.IsBankCard {
-		target.IsBankCard = 1
-	} else {
-		target.IsBankCard = -1
+	target := Receipt{
+		ID:             current.ID,
+		Post:           current.Post,
+		Electronically: current.Electronically,
+		Cash:           current.Cash,
+		IsProcessed:    1,
 	}
 
 	t.mutex.Lock()
@@ -128,7 +115,7 @@ func (t *DB) GetProcessedOnly(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	for i, _ := range t.receipt {
+	for i := range t.receipt {
 		if t.receipt[i].ID > int64(current.LastID) && t.receipt[i].IsProcessed == 1 {
 			foundReceipts = append(foundReceipts, t.receipt[i])
 			if len(foundReceipts) == current.Limit {
@@ -149,7 +136,7 @@ func (t *DB) GetUnprocessedOnly(current app.QueryData) (*app.ReceiptList, error)
 	var foundReceipts []Receipt
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	for i, _ := range t.receipt {
+	for i := range t.receipt {
 		if t.receipt[i].ID > int64(current.LastID) && t.receipt[i].IsProcessed == -1 {
 			foundReceipts = append(foundReceipts, t.receipt[i])
 			if len(foundReceipts) == current.Limit {
@@ -171,8 +158,8 @@ func (t *DB) GetWithBankCards(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	for i, _ := range t.receipt {
-		if t.receipt[i].ID > int64(current.LastID) && t.receipt[i].IsBankCard == 1 {
+	for i := range t.receipt {
+		if t.receipt[i].ID > int64(current.LastID) && t.receipt[i].Electronically > 0 {
 			foundReceipts = append(foundReceipts, t.receipt[i])
 			if len(foundReceipts) == current.Limit {
 				break
@@ -193,8 +180,8 @@ func (t *DB) GetWithCash(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	for i, _ := range t.receipt {
-		if t.receipt[i].ID > int64(current.LastID) && t.receipt[i].IsBankCard == -1 {
+	for i := range t.receipt {
+		if t.receipt[i].ID > int64(current.LastID) && t.receipt[i].Cash > 0 {
 			foundReceipts = append(foundReceipts, t.receipt[i])
 			if len(foundReceipts) == current.Limit {
 				break
@@ -215,7 +202,7 @@ func (t *DB) GetByPost(current app.QueryData) (*app.ReceiptList, error) {
 	var foundReceipts []Receipt
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	for i, _ := range t.receipt {
+	for i := range t.receipt {
 		if t.receipt[i].ID > int64(current.LastID) && t.receipt[i].Post == int64(current.Post) {
 			foundReceipts = append(foundReceipts, t.receipt[i])
 			if len(foundReceipts) == current.Limit {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/DiaElectronics/online_kasse/cmd/web/app"
 	"github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
@@ -12,9 +13,23 @@ import (
 
 var log = structlog.New()
 
+// Config kasse settings
+type Config struct {
+	Cashier         string
+	CashierINN      string
+	ReceiptItemName string
+	Tax             int
+}
+
+// ConfigSvc is an interface for getting kasse settings
+type ConfigSvc interface {
+	GetConfig() (*Config, error)
+}
+
 // KaznacheyFA representes object of Device, connected by USB
 type KaznacheyFA struct {
 	mutex *sync.Mutex
+	cfg   *Config
 }
 
 // PingDevice checks connection to the Device
@@ -80,8 +95,8 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	log.Info("Connection to Cash Register Device opened")
 
 	// Stage 3: Register the responsible person
-	fptr.SetParam(1021, "Канатников А.В.")
-	fptr.SetParam(1203, "5401199801")
+	fptr.SetParam(1021, dev.cfg.Cashier)
+	fptr.SetParam(1203, dev.cfg.CashierINN)
 	if err := fptr.OperatorLogin(); err != nil {
 		log.Info(err)
 		return app.ErrLoginFailure
@@ -115,10 +130,10 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	fptr.OpenReceipt()
 
 	// Stage 6: Register the service or commodity
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, "Мойка автомобиля")
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Price)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, dev.cfg.ReceiptItemName)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Cash+data.Electronically)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, fptr10.LIBFPTR_TAX_NO)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, dev.cfg.Tax)
 
 	// Set the service tags
 	// About the service provided (name and other information describing the service).
@@ -129,18 +144,20 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	fptr.Registration()
 
 	// Stage 7: Register the total
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_SUM, data.Price)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_SUM, data.Cash+data.Electronically)
 	fptr.ReceiptTotal()
 
 	// Stage 8: Set the payment method
-	if data.IsBankCard {
+	if data.Electronically > 0 {
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY)
-	} else {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Electronically)
+		fptr.Payment()
 	}
-
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Price)
-	fptr.Payment()
+	if data.Cash > 0 {
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Cash)
+		fptr.Payment()
+	}
 
 	// Stage 9: Close the receipt
 	_ = fptr.CloseReceipt()
@@ -190,9 +207,19 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 }
 
 // NewKaznacheyFA constructs new KaznacheyFA object
-func NewKaznacheyFA(mut *sync.Mutex) (*KaznacheyFA, error) {
+func NewKaznacheyFA(mut *sync.Mutex, configSvc ConfigSvc) (*KaznacheyFA, error) {
 	res := &KaznacheyFA{}
 	res.mutex = mut
+	for {
+		var err error
+		res.cfg, err = configSvc.GetConfig()
+
+		if err == nil {
+			break
+		}
+		log.PrintErr(err)
+		time.Sleep(time.Second)
+	}
 
 	return res, nil
 }
