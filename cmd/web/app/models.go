@@ -2,10 +2,10 @@ package app
 
 // Receipt represents generic Receipt object
 type Receipt struct {
-	ID         int64
-	Post       int64
-	Price      float64
-	IsBankCard bool
+	ID             int64
+	Post           int64
+	Cash           float64
+	Electronically float64
 }
 
 // ReceiptList represents list of Receipts

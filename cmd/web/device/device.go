@@ -131,7 +131,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	// Stage 6: Register the service or commodity
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, dev.cfg.ReceiptItemName)
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Price)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Cash+data.Electronically)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_QUANTITY, 1)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_TAX_TYPE, dev.cfg.Tax)
 
@@ -144,18 +144,20 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	fptr.Registration()
 
 	// Stage 7: Register the total
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_SUM, data.Price)
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_SUM, data.Cash+data.Electronically)
 	fptr.ReceiptTotal()
 
 	// Stage 8: Set the payment method
-	if data.IsBankCard {
+	if data.Electronically > 0 {
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY)
-	} else {
-		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Electronically)
+		fptr.Payment()
 	}
-
-	fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Price)
-	fptr.Payment()
+	if data.Cash > 0 {
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
+		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Cash)
+		fptr.Payment()
+	}
 
 	// Stage 9: Close the receipt
 	_ = fptr.CloseReceipt()

@@ -60,10 +60,55 @@ func (server *WebServer) PushReceipt(ctx *fasthttp.RequestCtx) {
 	}
 
 	currentReceipt.Post = post
-	currentReceipt.Price = price
-	currentReceipt.IsBankCard = isBankCard
+	if isBankCard {
+		currentReceipt.Electronically = price
+	} else {
+		currentReceipt.Cash = price
+	}
 
 	log.Info("API got new receipt")
+
+	server.application.RegisterReceipt(currentReceipt)
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+}
+
+// PushReceiptV2 pushes new Receipt to Application
+func (server *WebServer) PushReceiptV2(ctx *fasthttp.RequestCtx) {
+	currentReceipt := app.NewReceipt()
+
+	postStr := ctx.UserValue("post").(string)
+	cashStr := ctx.UserValue("cash").(string)
+	electronicallyStr := ctx.UserValue("electronically").(string)
+
+	invalidType := false
+
+	post, err := strconv.ParseInt(postStr, 10, 64)
+	if err != nil {
+		fmt.Fprintf(ctx, "Invalid type of post number: might be int64\n")
+		invalidType = true
+	}
+	cash, err := strconv.ParseFloat(cashStr, 64)
+	if err != nil {
+		fmt.Fprintf(ctx, "Invalid type of cash money amount: might be float64\n")
+		invalidType = true
+	}
+	electronically, err := strconv.ParseFloat(electronicallyStr, 64)
+	if err != nil {
+		fmt.Fprintf(ctx, "Invalid type of electronically money amount: might be float64\n")
+		invalidType = true
+	}
+
+	if invalidType {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+
+	currentReceipt.Post = post
+	currentReceipt.Cash = cash
+	currentReceipt.Electronically = electronically
+
+	log.Info("API got new receiptV2")
 
 	server.application.RegisterReceipt(currentReceipt)
 
@@ -75,6 +120,7 @@ func (server *WebServer) Start(errc chan<- error) {
 	server.application.Start()
 
 	router := fasthttprouter.New()
+	router.POST("/v2/:post/:cash/:electronically", server.PushReceiptV2)
 	router.PUT("/:post/:sum/:iscard", server.PushReceipt)
 	router.GET("/ping_kasse", server.Ping)
 	router.GET("/info", server.Info)

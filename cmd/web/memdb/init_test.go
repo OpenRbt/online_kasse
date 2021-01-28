@@ -6,19 +6,16 @@ var db *DB
 
 var (
 	r1 = app.Receipt{
-		Post:       4,
-		Price:      25,
-		IsBankCard: false,
+		Post: 4,
+		Cash: 25,
 	}
 	r2 = app.Receipt{
-		Post:       3,
-		Price:      2,
-		IsBankCard: false,
+		Post: 3,
+		Cash: 2,
 	}
 	r3 = app.Receipt{
-		Post:       4,
-		Price:      250,
-		IsBankCard: true,
+		Post:           4,
+		Electronically: 250,
 	}
 )
 
