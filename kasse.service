@@ -8,7 +8,7 @@ WorkingDirectory={DIR}/cmd/web
 StandardOutput=inherit
 StandardInput=inherit
 Restart=always
-User=pi
+User={USER}
 
 [Install]
 WantedBy=multi-user.target
