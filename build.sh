@@ -4,4 +4,3 @@ cd cmd/web
 go build
 cd ..
 
-./deploy_kasse.sh
