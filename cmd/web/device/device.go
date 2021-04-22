@@ -113,16 +113,19 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
 		if err := fptr.Report(); err != nil {
-			log.Info(err)
+			log.Info("Close shift err", "code", err, "Description", fptr.ErrorDescription())
 			return app.ErrShiftCloseFailure
 		}
 
 		fptr.OpenShift()
-		errorCode := fptr.ErrorCode()
+		errorCode = fptr.ErrorCode()
 		if errorCode != 0 {
-			log.Info("Error while opening shift")
+			log.Info("Error while opening shift", "code", errorCode, "Description", fptr.ErrorDescription())
 			return app.ErrShiftOpenFailure
 		}
+	}
+	if errorCode != 0 && errorCode != 83 {
+		log.Info("Error while opening shift", "code", errorCode, "Description", fptr.ErrorDescription())
 	}
 
 	// Stage 5: Open receipt
@@ -162,7 +165,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	// Stage 9: Close the receipt
 	_ = fptr.CloseReceipt()
 	if err := fptr.CheckDocumentClosed(); err != nil {
-		log.Info(fptr.ErrorDescription())
+		log.Info("Close the receipt err", "code", err, "Description", fptr.ErrorDescription())
 		return app.ErrReceiptCloseFailure
 	}
 	/*
@@ -181,11 +184,11 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	// Stage 12: Get fiscal data about last receipt
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_FN_DATA_TYPE, fptr10.LIBFPTR_FNDT_LAST_DOCUMENT)
 	if err := fptr.FnQueryData(); err != nil {
-		log.Info(err)
+		log.Info("Get fiscal data about last receipt err", "code", err, "Description", fptr.ErrorDescription())
 		return app.ErrUnableToGetFiscalData
 	}
-	log.Info("Fiscal Sign = %v", fptr.GetParamString(fptr10.LIBFPTR_PARAM_FISCAL_SIGN))
-	log.Info("Fiscal Document Number = %v", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENT_NUMBER))
+	log.Info("Fiscal", "Sign", fptr.GetParamString(fptr10.LIBFPTR_PARAM_FISCAL_SIGN))
+	log.Info("Fiscal", "Document Number", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENT_NUMBER))
 
 	// Stage 13: Get data about unsent receipts
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_FN_DATA_TYPE, fptr10.LIBFPTR_FNDT_OFD_EXCHANGE_STATUS)
@@ -193,9 +196,8 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 		log.Info(err)
 		return app.ErrUnableToGetFiscalData
 	}
-	log.Printf("Unsent documents count = %v", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENTS_COUNT))
-	log.Printf("First unsent document number = %v", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENT_NUMBER))
-	log.Printf("First unsent document date = %v", fptr.GetParamDateTime(fptr10.LIBFPTR_PARAM_DATE_TIME))
+	log.Info("Unsent documents", "count", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENTS_COUNT))
+	log.Info("First unsent document", "number", fptr.GetParamInt(fptr10.LIBFPTR_PARAM_DOCUMENT_NUMBER), "date", fptr.GetParamDateTime(fptr10.LIBFPTR_PARAM_DATE_TIME))
 
 	// Stage 14: Close the connection
 	if err := fptr.Close(); err != nil {
