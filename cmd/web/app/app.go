@@ -45,6 +45,7 @@ var (
 	ErrLoginFailure               = errors.New("Operator login failed")
 	ErrShiftCloseFailure          = errors.New("Shift closing failed")
 	ErrShiftOpenFailure           = errors.New("Shift opening failed")
+	ErrShiftState                 = errors.New("Get shift state")
 	ErrReceiptCreationFailure     = errors.New("Receipt opening failed")
 	ErrReceiptRegistrationFailure = errors.New("Receipt registration failed")
 	ErrTotalRegistrationFailure   = errors.New("Total registration failed")

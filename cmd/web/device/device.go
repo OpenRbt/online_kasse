@@ -104,11 +104,24 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	// Stage 4: Check the shift: open or close it (and open again)
 	// If the shift was already opened - just do nothing
-	fptr.OpenShift()
+	shiftState := fptr.GetParamInt(fptr10.LIBFPTR_PARAM_SHIFT_STATE)
 	errorCode := fptr.ErrorCode()
+	if errorCode != 0 {
+		log.Info("Error get shift state", "code", errorCode, "Description", fptr.ErrorDescription())
+		return app.ErrShiftState
+	}
+
+	if shiftState == fptr10.LIBFPTR_SS_CLOSED {
+		fptr.OpenShift()
+		errorCode := fptr.ErrorCode()
+		if errorCode != 0 {
+			log.Info("Error while opening shift", "code", errorCode, "Description", fptr.ErrorDescription())
+			return app.ErrShiftOpenFailure
+		}
+	}
 
 	// If shift expired (was more than 24 hours long) - close it and open again
-	if errorCode == 68 || errorCode == 141 {
+	if shiftState == fptr10.LIBFPTR_SS_EXPIRED {
 		log.Info("Shift expired - closing and reopening")
 
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
@@ -123,9 +136,6 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 			log.Info("Error while opening shift", "code", errorCode, "Description", fptr.ErrorDescription())
 			return app.ErrShiftOpenFailure
 		}
-	}
-	if errorCode != 0 && errorCode != 83 {
-		log.Info("Error while opening shift", "code", errorCode, "Description", fptr.ErrorDescription())
 	}
 
 	// Stage 5: Open receipt
