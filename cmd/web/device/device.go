@@ -104,6 +104,8 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	// Stage 4: Check the shift: open or close it (and open again)
 	// If the shift was already opened - just do nothing
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_DATA_TYPE, fptr10.LIBFPTR_DT_SHIFT_STATE)
+	fptr.QueryData()
 	shiftState := fptr.GetParamInt(fptr10.LIBFPTR_PARAM_SHIFT_STATE)
 	errorCode := fptr.ErrorCode()
 	if errorCode != 0 {
