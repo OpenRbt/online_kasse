@@ -51,8 +51,7 @@ func run(errc chan<- error) {
 
 	err = dev.PingDevice()
 	if err != nil {
-		log.PrintErr("can't find a printer, running a demo mode", err, errNoDevice)
-		dev = nil
+		log.PrintErr("can't find a printer", err, errNoDevice)
 	}
 
 	application := app.NewApplication(db, dev, errc)

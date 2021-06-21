@@ -94,6 +94,11 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	log.Info("Connection to Cash Register Device opened")
 
+	if !fptr.GetParamBool(fptr10.LIBFPTR_PARAM_DOCUMENT_CLOSED) {
+		fptr.CancelReceipt()
+		log.Info("Cancel receipt")
+	}
+
 	// Stage 3: Register the responsible person
 	fptr.SetParam(1021, dev.cfg.Cashier)
 	fptr.SetParam(1203, dev.cfg.CashierINN)
@@ -142,8 +147,12 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	// Stage 5: Open receipt
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE, fptr10.LIBFPTR_RT_SELL)
-	fptr.OpenReceipt()
-
+	err := fptr.OpenReceipt()
+	if err != nil {
+		errorCode := fptr.ErrorCode()
+		log.Info("Error while opening receipt", "code", errorCode, "Description", fptr.ErrorDescription(), "err", err)
+		return app.ErrReceiptCreationFailure
+	}
 	// Stage 6: Register the service or commodity
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_COMMODITY_NAME, dev.cfg.ReceiptItemName)
 	fptr.SetParam(fptr10.LIBFPTR_PARAM_PRICE, data.Cash+data.Electronically)
