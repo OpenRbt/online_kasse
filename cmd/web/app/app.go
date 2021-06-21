@@ -54,6 +54,7 @@ var (
 	ErrUnableToGetFiscalData      = errors.New("Unable to get fiscal data")
 	ErrCannotDisconnect           = errors.New("Cash Register Device in unable to disconnect")
 	ErrNotFound                   = errors.New("not found")
+	ErrDeviceReboot               = errors.New("device reboot")
 )
 
 // Application is responsible for all logics and communicates with other layers

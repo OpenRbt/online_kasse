@@ -94,7 +94,11 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	log.Info("Connection to Cash Register Device opened")
 
-	if !fptr.GetParamBool(fptr10.LIBFPTR_PARAM_DOCUMENT_CLOSED) {
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_DATA_TYPE, fptr10.LIBFPTR_DT_RECEIPT_STATE)
+	fptr.QueryData()
+
+	receiptType := fptr.GetParamInt(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE)
+	if receiptType != fptr10.LIBFPTR_RT_CLOSED {
 		fptr.CancelReceipt()
 		log.Info("Cancel receipt")
 	}
@@ -136,13 +140,9 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 			log.Info("Close shift err", "code", err, "Description", fptr.ErrorDescription())
 			return app.ErrShiftCloseFailure
 		}
-
-		fptr.OpenShift()
-		errorCode = fptr.ErrorCode()
-		if errorCode != 0 {
-			log.Info("Error while opening shift", "code", errorCode, "Description", fptr.ErrorDescription())
-			return app.ErrShiftOpenFailure
-		}
+		fptr.DeviceReboot()
+		log.Info("device reboot")
+		return app.ErrDeviceReboot
 	}
 
 	// Stage 5: Open receipt
