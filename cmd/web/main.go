@@ -79,7 +79,7 @@ func getConfig() dal.Config {
 	flag.StringVar(&cfg.Password, "dbpass", "", "db pass")
 	flag.StringVar(&cfg.Host, "dbhost", "", "db host [ADDR]:PORT")
 	flag.StringVar(&cfg.Database, "dbname", "", "db name")
-	flag.StringVar(&cfg.WashServer, "server", "http://localhost:8020", "The URL of the main server")
+	flag.StringVar(&cfg.WashServer, "server", "localhost:8020", "The URL of the main server")
 	flag.Usage = flag.PrintDefaults
 	flag.Parse()
 	return cfg
