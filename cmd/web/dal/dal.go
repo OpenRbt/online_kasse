@@ -29,10 +29,11 @@ type PostgresDAL struct {
 
 // Config database connection configuration
 type Config struct {
-	User     string
-	Password string
-	Host     string
-	Database string
+	User       string
+	Password   string
+	Host       string
+	Database   string
+	WashServer string
 }
 
 type dbLogger struct{}

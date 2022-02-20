@@ -20,11 +20,11 @@ type Client struct {
 }
 
 // NewClient creates and return new client for storageapi.
-func NewClient() device.ConfigSvc {
+func NewClient(endpoint string) device.ConfigSvc {
 	basePath := client.DefaultBasePath
 	schemes := client.DefaultSchemes
 
-	transport := httptransport.New("localhost:8020", basePath, schemes)
+	transport := httptransport.New(endpoint, basePath, schemes)
 	transport.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
