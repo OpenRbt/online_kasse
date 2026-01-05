@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // NewSetKasseParams creates a new SetKasseParams object
@@ -58,7 +58,8 @@ func NewSetKasseParamsWithHTTPClient(client *http.Client) *SetKasseParams {
 	}
 }
 
-/*SetKasseParams contains all the parameters to send to the API endpoint
+/*
+SetKasseParams contains all the parameters to send to the API endpoint
 for the set kasse operation typically these are written to a http.Request
 */
 type SetKasseParams struct {

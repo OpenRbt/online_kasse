@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // LoadReader is a Reader for the Load structure.
@@ -59,7 +59,8 @@ func NewLoadOK() *LoadOK {
 	return &LoadOK{}
 }
 
-/*LoadOK handles this case with default header values.
+/*
+LoadOK handles this case with default header values.
 
 OK
 */
@@ -86,7 +87,8 @@ func NewLoadNotFound() *LoadNotFound {
 	return &LoadNotFound{}
 }
 
-/*LoadNotFound handles this case with default header values.
+/*
+LoadNotFound handles this case with default header values.
 
 not found
 */
@@ -107,7 +109,8 @@ func NewLoadInternalServerError() *LoadInternalServerError {
 	return &LoadInternalServerError{}
 }
 
-/*LoadInternalServerError handles this case with default header values.
+/*
+LoadInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -123,7 +126,8 @@ func (o *LoadInternalServerError) readResponse(response runtime.ClientResponse, 
 	return nil
 }
 
-/*LoadBody load body
+/*
+LoadBody load body
 swagger:model LoadBody
 */
 type LoadBody struct {

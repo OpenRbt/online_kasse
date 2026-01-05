@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/svcstorage"
+	"github.com/OpenRbt/online_kasse/cmd/web/svcstorage"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/api"
-	"github.com/DiaElectronics/online_kasse/cmd/web/app"
-	"github.com/DiaElectronics/online_kasse/cmd/web/dal"
-	"github.com/DiaElectronics/online_kasse/cmd/web/device"
-	"github.com/DiaElectronics/online_kasse/cmd/web/memdb"
+	"github.com/OpenRbt/online_kasse/cmd/web/api"
+	"github.com/OpenRbt/online_kasse/cmd/web/app"
+	"github.com/OpenRbt/online_kasse/cmd/web/dal"
+	"github.com/OpenRbt/online_kasse/cmd/web/device"
+	"github.com/OpenRbt/online_kasse/cmd/web/memdb"
 	"github.com/powerman/structlog"
 )
 

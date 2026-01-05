@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // StationReportDatesReader is a Reader for the StationReportDates structure.
@@ -59,7 +59,8 @@ func NewStationReportDatesOK() *StationReportDatesOK {
 	return &StationReportDatesOK{}
 }
 
-/*StationReportDatesOK handles this case with default header values.
+/*
+StationReportDatesOK handles this case with default header values.
 
 OK
 */
@@ -88,7 +89,8 @@ func NewStationReportDatesNotFound() *StationReportDatesNotFound {
 	return &StationReportDatesNotFound{}
 }
 
-/*StationReportDatesNotFound handles this case with default header values.
+/*
+StationReportDatesNotFound handles this case with default header values.
 
 not found
 */
@@ -109,7 +111,8 @@ func NewStationReportDatesInternalServerError() *StationReportDatesInternalServe
 	return &StationReportDatesInternalServerError{}
 }
 
-/*StationReportDatesInternalServerError handles this case with default header values.
+/*
+StationReportDatesInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -125,7 +128,8 @@ func (o *StationReportDatesInternalServerError) readResponse(response runtime.Cl
 	return nil
 }
 
-/*StationReportDatesBody station report dates body
+/*
+StationReportDatesBody station report dates body
 swagger:model StationReportDatesBody
 */
 type StationReportDatesBody struct {

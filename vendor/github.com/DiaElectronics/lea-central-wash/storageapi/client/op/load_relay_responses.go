@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // LoadRelayReader is a Reader for the LoadRelay structure.
@@ -58,7 +58,8 @@ func NewLoadRelayOK() *LoadRelayOK {
 	return &LoadRelayOK{}
 }
 
-/*LoadRelayOK handles this case with default header values.
+/*
+LoadRelayOK handles this case with default header values.
 
 OK
 */
@@ -87,7 +88,8 @@ func NewLoadRelayNotFound() *LoadRelayNotFound {
 	return &LoadRelayNotFound{}
 }
 
-/*LoadRelayNotFound handles this case with default header values.
+/*
+LoadRelayNotFound handles this case with default header values.
 
 not found
 */
@@ -108,7 +110,8 @@ func NewLoadRelayInternalServerError() *LoadRelayInternalServerError {
 	return &LoadRelayInternalServerError{}
 }
 
-/*LoadRelayInternalServerError handles this case with default header values.
+/*
+LoadRelayInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -124,7 +127,8 @@ func (o *LoadRelayInternalServerError) readResponse(response runtime.ClientRespo
 	return nil
 }
 
-/*LoadRelayBody load relay body
+/*
+LoadRelayBody load relay body
 swagger:model LoadRelayBody
 */
 type LoadRelayBody struct {

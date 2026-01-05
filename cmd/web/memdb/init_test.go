@@ -1,6 +1,6 @@
 package memdb
 
-import "github.com/DiaElectronics/online_kasse/cmd/web/app"
+import "github.com/OpenRbt/online_kasse/cmd/web/app"
 
 var db *DB
 

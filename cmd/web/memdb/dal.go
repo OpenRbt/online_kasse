@@ -3,7 +3,7 @@ package memdb
 import (
 	"sync"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/app"
+	"github.com/OpenRbt/online_kasse/cmd/web/app"
 )
 
 // Receipt represents generic Receipt object in DAL

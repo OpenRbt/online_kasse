@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // LoadMoneyReader is a Reader for the LoadMoney structure.
@@ -58,7 +58,8 @@ func NewLoadMoneyOK() *LoadMoneyOK {
 	return &LoadMoneyOK{}
 }
 
-/*LoadMoneyOK handles this case with default header values.
+/*
+LoadMoneyOK handles this case with default header values.
 
 OK
 */
@@ -87,7 +88,8 @@ func NewLoadMoneyNotFound() *LoadMoneyNotFound {
 	return &LoadMoneyNotFound{}
 }
 
-/*LoadMoneyNotFound handles this case with default header values.
+/*
+LoadMoneyNotFound handles this case with default header values.
 
 not found
 */
@@ -108,7 +110,8 @@ func NewLoadMoneyInternalServerError() *LoadMoneyInternalServerError {
 	return &LoadMoneyInternalServerError{}
 }
 
-/*LoadMoneyInternalServerError handles this case with default header values.
+/*
+LoadMoneyInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -124,7 +127,8 @@ func (o *LoadMoneyInternalServerError) readResponse(response runtime.ClientRespo
 	return nil
 }
 
-/*LoadMoneyBody load money body
+/*
+LoadMoneyBody load money body
 swagger:model LoadMoneyBody
 */
 type LoadMoneyBody struct {

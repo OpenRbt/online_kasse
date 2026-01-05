@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // SaveIfNotExistsReader is a Reader for the SaveIfNotExists structure.
@@ -58,7 +58,8 @@ func NewSaveIfNotExistsNoContent() *SaveIfNotExistsNoContent {
 	return &SaveIfNotExistsNoContent{}
 }
 
-/*SaveIfNotExistsNoContent handles this case with default header values.
+/*
+SaveIfNotExistsNoContent handles this case with default header values.
 
 OK
 */
@@ -79,7 +80,8 @@ func NewSaveIfNotExistsNotFound() *SaveIfNotExistsNotFound {
 	return &SaveIfNotExistsNotFound{}
 }
 
-/*SaveIfNotExistsNotFound handles this case with default header values.
+/*
+SaveIfNotExistsNotFound handles this case with default header values.
 
 not found
 */
@@ -100,7 +102,8 @@ func NewSaveIfNotExistsInternalServerError() *SaveIfNotExistsInternalServerError
 	return &SaveIfNotExistsInternalServerError{}
 }
 
-/*SaveIfNotExistsInternalServerError handles this case with default header values.
+/*
+SaveIfNotExistsInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -116,7 +119,8 @@ func (o *SaveIfNotExistsInternalServerError) readResponse(response runtime.Clien
 	return nil
 }
 
-/*SaveIfNotExistsBody save if not exists body
+/*
+SaveIfNotExistsBody save if not exists body
 swagger:model SaveIfNotExistsBody
 */
 type SaveIfNotExistsBody struct {

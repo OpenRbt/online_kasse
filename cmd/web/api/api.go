@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/app"
+	"github.com/OpenRbt/online_kasse/cmd/web/app"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/powerman/structlog"
 	"github.com/valyala/fasthttp"

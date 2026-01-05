@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // KasseReader is a Reader for the Kasse structure.
@@ -56,7 +56,8 @@ func NewKasseOK() *KasseOK {
 	return &KasseOK{}
 }
 
-/*KasseOK handles this case with default header values.
+/*
+KasseOK handles this case with default header values.
 
 OK
 */
@@ -85,7 +86,8 @@ func NewKasseNotFound() *KasseNotFound {
 	return &KasseNotFound{}
 }
 
-/*KasseNotFound handles this case with default header values.
+/*
+KasseNotFound handles this case with default header values.
 
 not found
 */
@@ -106,7 +108,8 @@ func NewKasseInternalServerError() *KasseInternalServerError {
 	return &KasseInternalServerError{}
 }
 
-/*KasseInternalServerError handles this case with default header values.
+/*
+KasseInternalServerError handles this case with default header values.
 
 internal error
 */

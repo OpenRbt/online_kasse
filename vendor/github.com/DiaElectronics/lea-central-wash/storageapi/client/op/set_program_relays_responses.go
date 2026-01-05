@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // SetProgramRelaysReader is a Reader for the SetProgramRelays structure.
@@ -52,7 +52,8 @@ func NewSetProgramRelaysNoContent() *SetProgramRelaysNoContent {
 	return &SetProgramRelaysNoContent{}
 }
 
-/*SetProgramRelaysNoContent handles this case with default header values.
+/*
+SetProgramRelaysNoContent handles this case with default header values.
 
 OK
 */
@@ -73,7 +74,8 @@ func NewSetProgramRelaysInternalServerError() *SetProgramRelaysInternalServerErr
 	return &SetProgramRelaysInternalServerError{}
 }
 
-/*SetProgramRelaysInternalServerError handles this case with default header values.
+/*
+SetProgramRelaysInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -89,7 +91,8 @@ func (o *SetProgramRelaysInternalServerError) readResponse(response runtime.Clie
 	return nil
 }
 
-/*SetProgramRelaysBody set program relays body
+/*
+SetProgramRelaysBody set program relays body
 swagger:model SetProgramRelaysBody
 */
 type SetProgramRelaysBody struct {

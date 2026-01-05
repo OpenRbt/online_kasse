@@ -1,7 +1,7 @@
-# github.com/DiaElectronics/lea-central-wash v0.0.0-20210127085345-698bf9ba0c12
-github.com/DiaElectronics/lea-central-wash/storageapi/client
-github.com/DiaElectronics/lea-central-wash/storageapi/client/op
-github.com/DiaElectronics/lea-central-wash/storageapi/model
+# github.com/OpenRbt/lea-central-wash v0.0.0-20210127085345-698bf9ba0c12
+github.com/OpenRbt/lea-central-wash/storageapi/client
+github.com/OpenRbt/lea-central-wash/storageapi/client/op
+github.com/OpenRbt/lea-central-wash/storageapi/model
 # github.com/PuerkitoBio/purell v1.1.1
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578

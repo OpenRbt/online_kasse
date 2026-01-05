@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/app"
-	"github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
+	"github.com/OpenRbt/online_kasse/cmd/web/app"
+	"github.com/OpenRbt/online_kasse/cmd/web/fptr10"
 	"github.com/powerman/structlog"
+	"github.com/robfig/cron/v3"
 )
 
 var log = structlog.New()
@@ -19,6 +20,7 @@ type Config struct {
 	CashierINN      string
 	ReceiptItemName string
 	Tax             int
+	Timezone        int
 }
 
 // ConfigSvc is an interface for getting kasse settings
@@ -33,7 +35,7 @@ type KaznacheyFA struct {
 }
 
 // PingDevice checks connection to the Device
-//nolint
+// nolint
 func (dev *KaznacheyFA) PingDevice() error {
 	dev.mutex.Lock()
 	defer dev.mutex.Unlock()
@@ -64,7 +66,7 @@ func (dev *KaznacheyFA) PingDevice() error {
 }
 
 // PrintReceipt sends Receipt to the Device driver
-//nolint
+// nolint
 func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	if dev == nil {
 		fmt.Println("can't print on nil device")
@@ -229,6 +231,70 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 	return nil
 }
 
+// CloseShift sends Receipt to the Device driver
+// nolint
+func (dev *KaznacheyFA) CloseShift() error {
+	if dev == nil {
+		fmt.Println("can't print on nil device")
+		return app.ErrCannotConnect
+	}
+	dev.mutex.Lock()
+	defer dev.mutex.Unlock()
+
+	fptr := fptr10.New()
+	defer fptr.Destroy()
+
+	// Stage 1: Configure connection to Device
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_MODEL, strconv.Itoa(fptr10.LIBFPTR_MODEL_KAZNACHEY_FA))
+	fptr.SetSingleSetting(fptr10.LIBFPTR_SETTING_PORT, strconv.Itoa(fptr10.LIBFPTR_PORT_USB))
+
+	if err := fptr.ApplySingleSettings(); err != nil {
+		log.Info(err)
+		return app.ErrSetupFailure
+	}
+
+	// Stage 2: Connect to Device
+	if err := fptr.Open(); err != nil {
+		log.Info(err)
+		return app.ErrCannotConnect
+	}
+	defer fptr.Close()
+
+	log.Info("Connection to Cash Register Device opened")
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_DATA_TYPE, fptr10.LIBFPTR_DT_RECEIPT_STATE)
+	fptr.QueryData()
+
+	receiptType := fptr.GetParamInt(fptr10.LIBFPTR_PARAM_RECEIPT_TYPE)
+	if receiptType != fptr10.LIBFPTR_RT_CLOSED {
+		fptr.CancelReceipt()
+		log.Info("Cancel receipt")
+	}
+
+	// Stage 3: Register the responsible person
+	fptr.SetParam(1021, dev.cfg.Cashier)
+	fptr.SetParam(1203, dev.cfg.CashierINN)
+	if err := fptr.OperatorLogin(); err != nil {
+		log.Info(err)
+		return app.ErrLoginFailure
+	}
+
+	fptr.SetParam(fptr10.LIBFPTR_PARAM_REPORT_TYPE, fptr10.LIBFPTR_RT_CLOSE_SHIFT)
+	if err := fptr.Report(); err != nil {
+		log.Info("Close shift err", "code", err, "Description", fptr.ErrorDescription())
+		return app.ErrShiftCloseFailure
+	}
+	fptr.DeviceReboot()
+	log.Info("device reboot")
+
+	if err := fptr.Close(); err != nil {
+		log.Info(err)
+		return app.ErrCannotDisconnect
+	}
+
+	return nil
+}
+
 // NewKaznacheyFA constructs new KaznacheyFA object
 func NewKaznacheyFA(mut *sync.Mutex, configSvc ConfigSvc) (*KaznacheyFA, error) {
 	res := &KaznacheyFA{}
@@ -243,6 +309,16 @@ func NewKaznacheyFA(mut *sync.Mutex, configSvc ConfigSvc) (*KaznacheyFA, error) 
 		log.PrintErr(err)
 		time.Sleep(time.Second)
 	}
+	c := cron.New(cron.WithLocation(time.FixedZone("Other", res.cfg.Timezone*60)))
+	_, err := c.AddFunc("59 23 * * *", func() {
+		fmt.Println("close shift")
+		res.CloseShift()
+	})
+	if err != nil {
+		panic(err)
+	}
 
+	fmt.Println("start cron")
+	c.Start()
 	return res, nil
 }

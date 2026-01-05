@@ -14,6 +14,8 @@ import "C"
 import "C"
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"unsafe"
 )
 
@@ -26,13 +28,52 @@ func getProcAddress(lib unsafe.Pointer, name string) unsafe.Pointer {
 	return unsafe.Pointer(addr)
 }
 
-func loadLibrary() (*functionPointers, error) {
-	lib := C.dlopen(C.CString("libfptr10.so"), C.RTLD_LAZY)
-	if lib == nil {
-		return nil, fmt.Errorf("Can't load library \"libfptr10.so\" - %s", C.GoString(C.dlerror()))
+func doLoadLibrary(path string) (unsafe.Pointer, error) {
+	if path == "" {
+		path = "libfptr10.so"
 	}
+
+	if path != "libfptr10.so" {
+		fi, err := os.Stat(path)
+		if err != nil {
+			return nil, fmt.Errorf("can't load library \"%s\" - %s", path, err)
+		}
+
+		if fi.IsDir() {
+			path = filepath.Join(path, "libfptr10.so")
+		}
+	}
+
+	lib := C.dlopen(C.CString(path), C.RTLD_LAZY)
+	if lib == nil {
+		return nil, fmt.Errorf("can't load library \"%s\" - %s", path, C.GoString(C.dlerror()))
+	}
+
+	return lib, nil
+}
+
+func loadLibrary(path string) (*functionPointers, error) {
+	var lib unsafe.Pointer = nil
+	var loadError error = nil
+	if path == "" {
+		var exe string
+		if exe, loadError = os.Executable(); loadError == nil {
+			currentDirectory := filepath.Dir(exe)
+			if lib, loadError = doLoadLibrary(currentDirectory); loadError != nil {
+				lib, loadError = doLoadLibrary("")
+			}
+		}
+	} else {
+		lib, loadError = doLoadLibrary(path)
+	}
+
+	if lib == nil {
+		return nil, loadError
+	}
+
 	return &functionPointers{
 		C.libfptr_create_func(getProcAddress(lib, "libfptr_create")),
+		C.libfptr_create_with_id_func(getProcAddress(lib, "libfptr_create_with_id")),
 		C.libfptr_destroy_func(getProcAddress(lib, "libfptr_destroy")),
 
 		C.libfptr_get_version_string_func(getProcAddress(lib, "libfptr_get_version_string")),
@@ -46,6 +87,7 @@ func loadLibrary() (*functionPointers, error) {
 
 		C.libfptr_error_code_func(getProcAddress(lib, "libfptr_error_code")),
 		C.libfptr_error_description_func(getProcAddress(lib, "libfptr_error_description")),
+		C.libfptr_error_recommendation_func(getProcAddress(lib, "libfptr_error_recommendation")),
 		C.libfptr_reset_error_func(getProcAddress(lib, "libfptr_reset_error")),
 
 		C.libfptr_set_param_bool_func(getProcAddress(lib, "libfptr_set_param_bool")),
@@ -69,7 +111,10 @@ func loadLibrary() (*functionPointers, error) {
 		C.libfptr_get_param_bytearray_func(getProcAddress(lib, "libfptr_get_param_bytearray")),
 		C.libfptr_get_param_datetime_func(getProcAddress(lib, "libfptr_get_param_datetime")),
 
-		C.libfptr_log_write_func(getProcAddress(lib, "libfptr_log_write")),
+		C.libfptr_is_param_available_func(getProcAddress(lib, "libfptr_is_param_available")),
+
+		C.libfptr_log_write_func(getProcAddress(lib, "libfptr_log_write_ex")),
+		C.libfptr_change_label_func(getProcAddress(lib, "libfptr_change_label")),
 
 		C.libfptr_show_properties_func(getProcAddress(lib, "libfptr_show_properties")),
 
@@ -181,5 +226,25 @@ func loadLibrary() (*functionPointers, error) {
 		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_read_universal_counter_sum")),
 		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_read_universal_counter_quantity")),
 		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_clear_universal_counters_cache")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_disable_ofd_channel")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_enable_ofd_channel")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_validate_json")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_reflection_call")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_get_remote_server_info")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_begin_marking_code_validation")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_cancel_marking_code_validation")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_get_marking_code_validation_status")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_accept_marking_code")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_decline_marking_code")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_update_fnm_keys")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_write_sales_notice")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_check_marking_code_validations_ready")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_clear_marking_code_validation_result")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_ping_marking_server")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_get_marking_server_status")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_is_driver_locked")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_get_last_document_journal")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_find_document_in_journal")),
+		C.libfptr_simple_call_func(getProcAddress(lib, "libfptr_run_fn_command")),
 	}, nil
 }
