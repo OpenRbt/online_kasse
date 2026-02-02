@@ -3,7 +3,7 @@ package dal
 import (
 	"os/user"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/app"
+	"github.com/OpenRbt/online_kasse/cmd/web/app"
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 )

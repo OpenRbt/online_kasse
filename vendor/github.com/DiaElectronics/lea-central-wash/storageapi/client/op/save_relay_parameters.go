@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // NewSaveRelayParams creates a new SaveRelayParams object
@@ -58,7 +58,8 @@ func NewSaveRelayParamsWithHTTPClient(client *http.Client) *SaveRelayParams {
 	}
 }
 
-/*SaveRelayParams contains all the parameters to send to the API endpoint
+/*
+SaveRelayParams contains all the parameters to send to the API endpoint
 for the save relay operation typically these are written to a http.Request
 */
 type SaveRelayParams struct {

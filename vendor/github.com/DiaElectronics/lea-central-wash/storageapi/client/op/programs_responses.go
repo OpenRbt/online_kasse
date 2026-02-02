@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // ProgramsReader is a Reader for the Programs structure.
@@ -52,7 +52,8 @@ func NewProgramsOK() *ProgramsOK {
 	return &ProgramsOK{}
 }
 
-/*ProgramsOK handles this case with default header values.
+/*
+ProgramsOK handles this case with default header values.
 
 OK
 */
@@ -79,7 +80,8 @@ func NewProgramsInternalServerError() *ProgramsInternalServerError {
 	return &ProgramsInternalServerError{}
 }
 
-/*ProgramsInternalServerError handles this case with default header values.
+/*
+ProgramsInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -95,7 +97,8 @@ func (o *ProgramsInternalServerError) readResponse(response runtime.ClientRespon
 	return nil
 }
 
-/*ProgramsBody programs body
+/*
+ProgramsBody programs body
 swagger:model ProgramsBody
 */
 type ProgramsBody struct {

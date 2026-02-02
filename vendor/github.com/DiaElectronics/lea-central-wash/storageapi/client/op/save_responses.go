@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // SaveReader is a Reader for the Save structure.
@@ -58,7 +58,8 @@ func NewSaveNoContent() *SaveNoContent {
 	return &SaveNoContent{}
 }
 
-/*SaveNoContent handles this case with default header values.
+/*
+SaveNoContent handles this case with default header values.
 
 OK
 */
@@ -79,7 +80,8 @@ func NewSaveNotFound() *SaveNotFound {
 	return &SaveNotFound{}
 }
 
-/*SaveNotFound handles this case with default header values.
+/*
+SaveNotFound handles this case with default header values.
 
 not found
 */
@@ -100,7 +102,8 @@ func NewSaveInternalServerError() *SaveInternalServerError {
 	return &SaveInternalServerError{}
 }
 
-/*SaveInternalServerError handles this case with default header values.
+/*
+SaveInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -116,7 +119,8 @@ func (o *SaveInternalServerError) readResponse(response runtime.ClientResponse, 
 	return nil
 }
 
-/*SaveBody save body
+/*
+SaveBody save body
 swagger:model SaveBody
 */
 type SaveBody struct {

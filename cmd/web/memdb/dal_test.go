@@ -3,7 +3,7 @@ package memdb
 import (
 	"testing"
 
-	"github.com/DiaElectronics/online_kasse/cmd/web/app"
+	"github.com/OpenRbt/online_kasse/cmd/web/app"
 	"github.com/powerman/check"
 )
 

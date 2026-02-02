@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // StatusCollectionReader is a Reader for the StatusCollection structure.
@@ -49,7 +49,8 @@ func NewStatusCollectionOK() *StatusCollectionOK {
 	return &StatusCollectionOK{}
 }
 
-/*StatusCollectionOK handles this case with default header values.
+/*
+StatusCollectionOK handles this case with default header values.
 
 OK
 */
@@ -78,7 +79,8 @@ func NewStatusCollectionInternalServerError() *StatusCollectionInternalServerErr
 	return &StatusCollectionInternalServerError{}
 }
 
-/*StatusCollectionInternalServerError handles this case with default header values.
+/*
+StatusCollectionInternalServerError handles this case with default header values.
 
 internal error
 */

@@ -2,12 +2,12 @@ package fptr10
 
 /*
 #include <wchar.h>
-const size_t SIZEOF_WCHAR_T = sizeof(wchar_t);
-void gowchar_set (wchar_t *arr, int pos, wchar_t val)
+const size_t FPTR10_SIZEOF_WCHAR_T = sizeof(wchar_t);
+void fptr10_gowchar_set (wchar_t *arr, int pos, wchar_t val)
 {
 	arr[pos] = val;
 }
-wchar_t gowchar_get (wchar_t *arr, int pos)
+wchar_t fptr10_gowchar_get (wchar_t *arr, int pos)
 {
 	return arr[pos];
 }
@@ -20,38 +20,38 @@ import (
 	"unicode/utf8"
 )
 
-var SIZEOF_WCHAR_T C.size_t = C.size_t(C.SIZEOF_WCHAR_T)
+var FPTR10_SIZEOF_WCHAR_T C.size_t = C.size_t(C.FPTR10_SIZEOF_WCHAR_T)
 
 func StringToWcharT(s string) (*C.wchar_t, C.size_t) {
-	switch SIZEOF_WCHAR_T {
+	switch FPTR10_SIZEOF_WCHAR_T {
 	case 2:
 		return stringToWchar2(s) // Windows
 	case 4:
 		return stringToWchar4(s) // Unix
 	default:
-		panic(fmt.Sprintf("Invalid sizeof(wchar_t) = %v", SIZEOF_WCHAR_T))
+		panic(fmt.Sprintf("Invalid sizeof(wchar_t) = %v", FPTR10_SIZEOF_WCHAR_T))
 	}
 }
 
 func WcharTToString(s *C.wchar_t) (string, error) {
-	switch SIZEOF_WCHAR_T {
+	switch FPTR10_SIZEOF_WCHAR_T {
 	case 2:
 		return wchar2ToString(s) // Windows
 	case 4:
 		return wchar4ToString(s) // Unix
 	default:
-		panic(fmt.Sprintf("Invalid sizeof(wchar_t) = %v", SIZEOF_WCHAR_T))
+		panic(fmt.Sprintf("Invalid sizeof(wchar_t) = %v", FPTR10_SIZEOF_WCHAR_T))
 	}
 }
 
 func WcharTNToString(s *C.wchar_t, size C.size_t) (string, error) {
-	switch SIZEOF_WCHAR_T {
+	switch FPTR10_SIZEOF_WCHAR_T {
 	case 2:
 		return wchar2NToString(s, size) // Windows
 	case 4:
 		return wchar4NToString(s, size) // Unix
 	default:
-		panic(fmt.Sprintf("Invalid sizeof(wchar_t) = %v", SIZEOF_WCHAR_T))
+		panic(fmt.Sprintf("Invalid sizeof(wchar_t) = %v", FPTR10_SIZEOF_WCHAR_T))
 	}
 }
 
@@ -69,22 +69,22 @@ func stringToWchar2(s string) (*C.wchar_t, C.size_t) {
 		s1 = s1[size:]
 	}
 	slen++ // \0
-	res := C.malloc(C.size_t(slen) * SIZEOF_WCHAR_T)
+	res := C.malloc(C.size_t(slen) * FPTR10_SIZEOF_WCHAR_T)
 	var i int
 	for len(s) > 0 {
 		r, size := utf8.DecodeRuneInString(s)
 		if r1, r2 := utf16.EncodeRune(r); r1 != '\uFFFD' {
-			C.gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r1))
+			C.fptr10_gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r1))
 			i++
-			C.gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r2))
+			C.fptr10_gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r2))
 			i++
 		} else {
-			C.gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r))
+			C.fptr10_gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r))
 			i++
 		}
 		s = s[size:]
 	}
-	C.gowchar_set((*C.wchar_t)(res), C.int(slen-1), C.wchar_t(0)) // \0
+	C.fptr10_gowchar_set((*C.wchar_t)(res), C.int(slen-1), C.wchar_t(0)) // \0
 	return (*C.wchar_t)(res), C.size_t(slen)
 }
 
@@ -92,15 +92,15 @@ func stringToWchar2(s string) (*C.wchar_t, C.size_t) {
 func stringToWchar4(s string) (*C.wchar_t, C.size_t) {
 	slen := utf8.RuneCountInString(s)
 	slen++ // \0
-	res := C.malloc(C.size_t(slen) * SIZEOF_WCHAR_T)
+	res := C.malloc(C.size_t(slen) * FPTR10_SIZEOF_WCHAR_T)
 	var i int
 	for len(s) > 0 {
 		r, size := utf8.DecodeRuneInString(s)
-		C.gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r))
+		C.fptr10_gowchar_set((*C.wchar_t)(res), C.int(i), C.wchar_t(r))
 		s = s[size:]
 		i++
 	}
-	C.gowchar_set((*C.wchar_t)(res), C.int(slen-1), C.wchar_t(0)) // \0
+	C.fptr10_gowchar_set((*C.wchar_t)(res), C.int(slen-1), C.wchar_t(0)) // \0
 	return (*C.wchar_t)(res), C.size_t(slen)
 }
 
@@ -109,7 +109,7 @@ func wchar2ToString(s *C.wchar_t) (string, error) {
 	var i int
 	var res string
 	for {
-		ch := C.gowchar_get(s, C.int(i))
+		ch := C.fptr10_gowchar_get(s, C.int(i))
 		if ch == 0 {
 			break
 		}
@@ -122,7 +122,7 @@ func wchar2ToString(s *C.wchar_t) (string, error) {
 			}
 			res += string(r)
 		} else {
-			ch2 := C.gowchar_get(s, C.int(i))
+			ch2 := C.fptr10_gowchar_get(s, C.int(i))
 			r2 := rune(ch2)
 			r12 := utf16.DecodeRune(r, r2)
 			if r12 == '\uFFFD' {
@@ -141,7 +141,7 @@ func wchar4ToString(s *C.wchar_t) (string, error) {
 	var i int
 	var res string
 	for {
-		ch := C.gowchar_get(s, C.int(i))
+		ch := C.fptr10_gowchar_get(s, C.int(i))
 		if ch == 0 {
 			break
 		}
@@ -162,7 +162,7 @@ func wchar2NToString(s *C.wchar_t, size C.size_t) (string, error) {
 	var res string
 	N := int(size)
 	for i < N {
-		ch := C.gowchar_get(s, C.int(i))
+		ch := C.fptr10_gowchar_get(s, C.int(i))
 		if ch == 0 {
 			break
 		}
@@ -180,7 +180,7 @@ func wchar2NToString(s *C.wchar_t, size C.size_t) (string, error) {
 				err := fmt.Errorf("Invalid surrogate pair at position %v", i-1)
 				return "", err
 			}
-			ch2 := C.gowchar_get(s, C.int(i))
+			ch2 := C.fptr10_gowchar_get(s, C.int(i))
 			r2 := rune(ch2)
 			r12 := utf16.DecodeRune(r, r2)
 			if r12 == '\uFFFD' {
@@ -200,7 +200,7 @@ func wchar4NToString(s *C.wchar_t, size C.size_t) (string, error) {
 	var res string
 	N := int(size)
 	for i < N {
-		ch := C.gowchar_get(s, C.int(i))
+		ch := C.fptr10_gowchar_get(s, C.int(i))
 		r := rune(ch)
 		if !utf8.ValidRune(r) {
 			err := fmt.Errorf("Invalid rune at position %v", i)

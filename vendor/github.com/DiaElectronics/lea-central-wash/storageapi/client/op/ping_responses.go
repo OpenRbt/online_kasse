@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // PingReader is a Reader for the Ping structure.
@@ -45,7 +45,8 @@ func NewPingOK() *PingOK {
 	return &PingOK{}
 }
 
-/*PingOK handles this case with default header values.
+/*
+PingOK handles this case with default header values.
 
 OK
 */
@@ -69,7 +70,8 @@ func (o *PingOK) readResponse(response runtime.ClientResponse, consumer runtime.
 	return nil
 }
 
-/*PingBody ping body
+/*
+PingBody ping body
 swagger:model PingBody
 */
 type PingBody struct {
@@ -123,7 +125,8 @@ func (o *PingBody) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-/*PingOKBody ping o k body
+/*
+PingOKBody ping o k body
 swagger:model PingOKBody
 */
 type PingOKBody struct {

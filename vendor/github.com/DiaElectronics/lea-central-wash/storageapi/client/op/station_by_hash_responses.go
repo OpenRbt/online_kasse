@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // StationByHashReader is a Reader for the StationByHash structure.
@@ -51,7 +51,8 @@ func NewStationByHashOK() *StationByHashOK {
 	return &StationByHashOK{}
 }
 
-/*StationByHashOK handles this case with default header values.
+/*
+StationByHashOK handles this case with default header values.
 
 OK
 */
@@ -78,7 +79,8 @@ func NewStationByHashInternalServerError() *StationByHashInternalServerError {
 	return &StationByHashInternalServerError{}
 }
 
-/*StationByHashInternalServerError handles this case with default header values.
+/*
+StationByHashInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -94,7 +96,8 @@ func (o *StationByHashInternalServerError) readResponse(response runtime.ClientR
 	return nil
 }
 
-/*StationByHashBody station by hash body
+/*
+StationByHashBody station by hash body
 swagger:model StationByHashBody
 */
 type StationByHashBody struct {

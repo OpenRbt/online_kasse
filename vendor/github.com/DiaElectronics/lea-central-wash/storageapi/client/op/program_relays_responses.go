@@ -17,7 +17,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // ProgramRelaysReader is a Reader for the ProgramRelays structure.
@@ -53,7 +53,8 @@ func NewProgramRelaysOK() *ProgramRelaysOK {
 	return &ProgramRelaysOK{}
 }
 
-/*ProgramRelaysOK handles this case with default header values.
+/*
+ProgramRelaysOK handles this case with default header values.
 
 OK
 */
@@ -82,7 +83,8 @@ func NewProgramRelaysInternalServerError() *ProgramRelaysInternalServerError {
 	return &ProgramRelaysInternalServerError{}
 }
 
-/*ProgramRelaysInternalServerError handles this case with default header values.
+/*
+ProgramRelaysInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -98,7 +100,8 @@ func (o *ProgramRelaysInternalServerError) readResponse(response runtime.ClientR
 	return nil
 }
 
-/*ProgramRelaysBody program relays body
+/*
+ProgramRelaysBody program relays body
 swagger:model ProgramRelaysBody
 */
 type ProgramRelaysBody struct {
@@ -176,7 +179,8 @@ func (o *ProgramRelaysBody) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-/*ProgramRelaysOKBody program relays o k body
+/*
+ProgramRelaysOKBody program relays o k body
 swagger:model ProgramRelaysOKBody
 */
 type ProgramRelaysOKBody struct {

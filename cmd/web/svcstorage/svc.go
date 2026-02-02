@@ -8,10 +8,10 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/pkg/errors"
 
-	"github.com/DiaElectronics/lea-central-wash/storageapi/client"
-	"github.com/DiaElectronics/lea-central-wash/storageapi/model"
-	"github.com/DiaElectronics/online_kasse/cmd/web/device"
-	"github.com/DiaElectronics/online_kasse/cmd/web/fptr10"
+	"github.com/OpenRbt/lea-central-wash/storageapi/client"
+	"github.com/OpenRbt/lea-central-wash/storageapi/model"
+	"github.com/OpenRbt/online_kasse/cmd/web/device"
+	"github.com/OpenRbt/online_kasse/cmd/web/fptr10"
 )
 
 // Client for storage.
@@ -64,6 +64,10 @@ func newConfig(cfg *model.KasseConfig) (*device.Config, error) {
 		tax = fptr10.LIBFPTR_TAX_NO
 	case "TAX_VAT120":
 		tax = fptr10.LIBFPTR_TAX_VAT120
+	case "TAX_VAT105":
+		tax = fptr10.LIBFPTR_TAX_VAT105
+	case "TAX_VAT107":
+		tax = fptr10.LIBFPTR_TAX_VAT107
 	default:
 		return nil, errors.New("unknown tax")
 	}
@@ -75,5 +79,6 @@ func newConfig(cfg *model.KasseConfig) (*device.Config, error) {
 		CashierINN:      cfg.CashierINN,
 		ReceiptItemName: cfg.ReceiptItemName,
 		Tax:             tax,
+		Timezone:        int(cfg.Timezone),
 	}, nil
 }

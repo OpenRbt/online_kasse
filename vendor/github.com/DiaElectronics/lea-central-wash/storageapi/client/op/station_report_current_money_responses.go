@@ -16,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // StationReportCurrentMoneyReader is a Reader for the StationReportCurrentMoney structure.
@@ -59,7 +59,8 @@ func NewStationReportCurrentMoneyOK() *StationReportCurrentMoneyOK {
 	return &StationReportCurrentMoneyOK{}
 }
 
-/*StationReportCurrentMoneyOK handles this case with default header values.
+/*
+StationReportCurrentMoneyOK handles this case with default header values.
 
 OK
 */
@@ -88,7 +89,8 @@ func NewStationReportCurrentMoneyNotFound() *StationReportCurrentMoneyNotFound {
 	return &StationReportCurrentMoneyNotFound{}
 }
 
-/*StationReportCurrentMoneyNotFound handles this case with default header values.
+/*
+StationReportCurrentMoneyNotFound handles this case with default header values.
 
 not found
 */
@@ -109,7 +111,8 @@ func NewStationReportCurrentMoneyInternalServerError() *StationReportCurrentMone
 	return &StationReportCurrentMoneyInternalServerError{}
 }
 
-/*StationReportCurrentMoneyInternalServerError handles this case with default header values.
+/*
+StationReportCurrentMoneyInternalServerError handles this case with default header values.
 
 internal error
 */
@@ -125,7 +128,8 @@ func (o *StationReportCurrentMoneyInternalServerError) readResponse(response run
 	return nil
 }
 
-/*StationReportCurrentMoneyBody station report current money body
+/*
+StationReportCurrentMoneyBody station report current money body
 swagger:model StationReportCurrentMoneyBody
 */
 type StationReportCurrentMoneyBody struct {

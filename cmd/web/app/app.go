@@ -83,7 +83,6 @@ func (app *Application) Info() string {
 // NewApplication constructs Application
 func NewApplication(db DataAccessLayer, dev DeviceAccessLayer, errchannel chan<- error) *Application {
 	res := &Application{}
-
 	res.DB = db
 	res.Device = dev
 	res.errc = errchannel

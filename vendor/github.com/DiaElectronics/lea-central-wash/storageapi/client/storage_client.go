@@ -11,7 +11,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/DiaElectronics/lea-central-wash/storageapi/client/op"
+	"github.com/OpenRbt/lea-central-wash/storageapi/client/op"
 )
 
 // Default storage HTTP client.

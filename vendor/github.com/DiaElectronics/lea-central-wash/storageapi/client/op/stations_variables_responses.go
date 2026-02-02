@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	model "github.com/DiaElectronics/lea-central-wash/storageapi/model"
+	model "github.com/OpenRbt/lea-central-wash/storageapi/model"
 )
 
 // StationsVariablesReader is a Reader for the StationsVariables structure.
@@ -49,7 +49,8 @@ func NewStationsVariablesOK() *StationsVariablesOK {
 	return &StationsVariablesOK{}
 }
 
-/*StationsVariablesOK handles this case with default header values.
+/*
+StationsVariablesOK handles this case with default header values.
 
 OK
 */
@@ -76,7 +77,8 @@ func NewStationsVariablesInternalServerError() *StationsVariablesInternalServerE
 	return &StationsVariablesInternalServerError{}
 }
 
-/*StationsVariablesInternalServerError handles this case with default header values.
+/*
+StationsVariablesInternalServerError handles this case with default header values.
 
 internal error
 */

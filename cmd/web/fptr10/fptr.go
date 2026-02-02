@@ -6,7 +6,9 @@ package fptr10
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"math"
 	"time"
 	"unsafe"
 )
@@ -16,6 +18,10 @@ import (
 
 int bridge_libfptr_create_func(libfptr_create_func f, libfptr_handle *fptr) {
     return f(fptr);
+}
+
+int bridge_libfptr_create_with_id_func(libfptr_create_with_id_func f, libfptr_handle *fptr, const wchar_t *id) {
+    return f(fptr, id);
 }
 
 void bridge_libfptr_destroy_func(libfptr_destroy_func f, libfptr_handle *fptr) {
@@ -51,6 +57,10 @@ int bridge_libfptr_error_code_func(libfptr_error_code_func f, libfptr_handle fpt
 }
 
 int bridge_libfptr_error_description_func(libfptr_error_description_func f, libfptr_handle fptr, wchar_t *value, int size) {
+    return f(fptr, value, size);
+}
+
+int bridge_libfptr_error_recommendation_func(libfptr_error_recommendation_func f, libfptr_handle fptr, wchar_t *value, int size) {
     return f(fptr, value, size);
 }
 
@@ -106,8 +116,16 @@ void bridge_libfptr_get_param_datetime_func(libfptr_get_param_datetime_func f, l
     return f(fptr, param_id, year, month, day, hour, minute, second);
 }
 
-int bridge_libfptr_log_write_func(libfptr_log_write_func f, const wchar_t *tag, int level, const wchar_t *message) {
-    return f(tag, level, message);
+int bridge_libfptr_is_param_available_func(libfptr_is_param_available_func f, libfptr_handle fptr, int param_id) {
+    return f(fptr, param_id);
+}
+
+int bridge_libfptr_log_write_func(libfptr_log_write_func f, libfptr_handle fptr, const wchar_t *tag, int level, const wchar_t *message) {
+    return f(fptr, tag, level, message);
+}
+
+int bridge_libfptr_change_label_func(libfptr_change_label_func f, libfptr_handle fptr, const wchar_t *label) {
+    return f(fptr, label);
 }
 
 int bridge_libfptr_show_properties_func(libfptr_show_properties_func f, libfptr_handle fptr, uint parent_type, void *parent) {
@@ -121,292 +139,414 @@ int bridge_libfptr_simple_func(libfptr_simple_call_func f, libfptr_handle fptr) 
 import "C"
 
 const (
-	LIBFPTR_PARAM_TEXT                            = 65536
-	LIBFPTR_PARAM_TEXT_WRAP                       = 65537
-	LIBFPTR_PARAM_ALIGNMENT                       = 65538
-	LIBFPTR_PARAM_FONT                            = 65539
-	LIBFPTR_PARAM_FONT_DOUBLE_WIDTH               = 65540
-	LIBFPTR_PARAM_FONT_DOUBLE_HEIGHT              = 65541
-	LIBFPTR_PARAM_LINESPACING                     = 65542
-	LIBFPTR_PARAM_BRIGHTNESS                      = 65543
-	LIBFPTR_PARAM_MODEL                           = 65544
-	LIBFPTR_PARAM_RECEIPT_TYPE                    = 65545
-	LIBFPTR_PARAM_REPORT_TYPE                     = 65546
-	LIBFPTR_PARAM_MODE                            = 65547
-	LIBFPTR_PARAM_EXTERNAL_DEVICE_TYPE            = 65548
-	LIBFPTR_PARAM_EXTERNAL_DEVICE_DATA            = 65549
-	LIBFPTR_PARAM_FREQUENCY                       = 65550
-	LIBFPTR_PARAM_DURATION                        = 65551
-	LIBFPTR_PARAM_CUT_TYPE                        = 65552
-	LIBFPTR_PARAM_DRAWER_ON_TIMEOUT               = 65553
-	LIBFPTR_PARAM_DRAWER_OFF_TIMEOUT              = 65554
-	LIBFPTR_PARAM_DRAWER_ON_QUANTITY              = 65555
-	LIBFPTR_PARAM_TIMEOUT_ENQ                     = 65556
-	LIBFPTR_PARAM_COMMAND_BUFFER                  = 65557
-	LIBFPTR_PARAM_ANSWER_BUFFER                   = 65558
-	LIBFPTR_PARAM_SERIAL_NUMBER                   = 65559
-	LIBFPTR_PARAM_MANUFACTURER_CODE               = 65560
-	LIBFPTR_PARAM_NO_NEED_ANSWER                  = 65561
-	LIBFPTR_PARAM_INFO_DISCOUNT_SUM               = 65562
-	LIBFPTR_PARAM_USE_ONLY_TAX_TYPE               = 65563
-	LIBFPTR_PARAM_PAYMENT_TYPE                    = 65564
-	LIBFPTR_PARAM_PAYMENT_SUM                     = 65565
-	LIBFPTR_PARAM_REMAINDER                       = 65566
-	LIBFPTR_PARAM_CHANGE                          = 65567
-	LIBFPTR_PARAM_DEPARTMENT                      = 65568
-	LIBFPTR_PARAM_TAX_TYPE                        = 65569
-	LIBFPTR_PARAM_TAX_SUM                         = 65570
-	LIBFPTR_PARAM_TAX_MODE                        = 65571
-	LIBFPTR_PARAM_RECEIPT_ELECTRONICALLY          = 65572
-	LIBFPTR_PARAM_USER_PASSWORD                   = 65573
-	LIBFPTR_PARAM_SCALE                           = 65574
-	LIBFPTR_PARAM_LEFT_MARGIN                     = 65575
-	LIBFPTR_PARAM_BARCODE                         = 65576
-	LIBFPTR_PARAM_BARCODE_TYPE                    = 65577
-	LIBFPTR_PARAM_BARCODE_PRINT_TEXT              = 65578
-	LIBFPTR_PARAM_BARCODE_VERSION                 = 65579
-	LIBFPTR_PARAM_BARCODE_CORRECTION              = 65580
-	LIBFPTR_PARAM_BARCODE_COLUMNS                 = 65581
-	LIBFPTR_PARAM_BARCODE_INVERT                  = 65582
-	LIBFPTR_PARAM_HEIGHT                          = 65583
-	LIBFPTR_PARAM_WIDTH                           = 65584
-	LIBFPTR_PARAM_FILENAME                        = 65585
-	LIBFPTR_PARAM_PICTURE_NUMBER                  = 65586
-	LIBFPTR_PARAM_DATA_TYPE                       = 65587
-	LIBFPTR_PARAM_OPERATOR_ID                     = 65588
-	LIBFPTR_PARAM_LOGICAL_NUMBER                  = 65589
-	LIBFPTR_PARAM_DATE_TIME                       = 65590
-	LIBFPTR_PARAM_FISCAL                          = 65591
-	LIBFPTR_PARAM_SHIFT_STATE                     = 65592
-	LIBFPTR_PARAM_CASHDRAWER_OPENED               = 65593
-	LIBFPTR_PARAM_RECEIPT_PAPER_PRESENT           = 65594
-	LIBFPTR_PARAM_COVER_OPENED                    = 65595
-	LIBFPTR_PARAM_SUBMODE                         = 65596
-	LIBFPTR_PARAM_RECEIPT_NUMBER                  = 65597
-	LIBFPTR_PARAM_DOCUMENT_NUMBER                 = 65598
-	LIBFPTR_PARAM_SHIFT_NUMBER                    = 65599
-	LIBFPTR_PARAM_RECEIPT_SUM                     = 65600
-	LIBFPTR_PARAM_RECEIPT_LINE_LENGTH             = 65601
-	LIBFPTR_PARAM_RECEIPT_LINE_LENGTH_PIX         = 65602
-	LIBFPTR_PARAM_MODEL_NAME                      = 65603
-	LIBFPTR_PARAM_UNIT_VERSION                    = 65604
-	LIBFPTR_PARAM_PRINTER_CONNECTION_LOST         = 65605
-	LIBFPTR_PARAM_PRINTER_ERROR                   = 65606
-	LIBFPTR_PARAM_CUT_ERROR                       = 65607
-	LIBFPTR_PARAM_PRINTER_OVERHEAT                = 65608
-	LIBFPTR_PARAM_UNIT_TYPE                       = 65609
-	LIBFPTR_PARAM_LICENSE_NUMBER                  = 65610
-	LIBFPTR_PARAM_LICENSE_ENTERED                 = 65611
-	LIBFPTR_PARAM_LICENSE                         = 65612
-	LIBFPTR_PARAM_SUM                             = 65613
-	LIBFPTR_PARAM_COUNT                           = 65614
-	LIBFPTR_PARAM_COUNTER_TYPE                    = 65615
-	LIBFPTR_PARAM_STEP_COUNTER_TYPE               = 65616
-	LIBFPTR_PARAM_ERROR_TAG_NUMBER                = 65617
-	LIBFPTR_PARAM_TABLE                           = 65618
-	LIBFPTR_PARAM_ROW                             = 65619
-	LIBFPTR_PARAM_FIELD                           = 65620
-	LIBFPTR_PARAM_FIELD_VALUE                     = 65621
-	LIBFPTR_PARAM_FN_DATA_TYPE                    = 65622
-	LIBFPTR_PARAM_TAG_NUMBER                      = 65623
-	LIBFPTR_PARAM_TAG_VALUE                       = 65624
-	LIBFPTR_PARAM_DOCUMENTS_COUNT                 = 65625
-	LIBFPTR_PARAM_FISCAL_SIGN                     = 65626
-	LIBFPTR_PARAM_DEVICE_FFD_VERSION              = 65627
-	LIBFPTR_PARAM_FN_FFD_VERSION                  = 65628
-	LIBFPTR_PARAM_FFD_VERSION                     = 65629
-	LIBFPTR_PARAM_CHECK_SUM                       = 65630
-	LIBFPTR_PARAM_COMMODITY_NAME                  = 65631
-	LIBFPTR_PARAM_PRICE                           = 65632
-	LIBFPTR_PARAM_QUANTITY                        = 65633
-	LIBFPTR_PARAM_POSITION_SUM                    = 65634
-	LIBFPTR_PARAM_FN_TYPE                         = 65635
-	LIBFPTR_PARAM_FN_VERSION                      = 65636
-	LIBFPTR_PARAM_REGISTRATIONS_REMAIN            = 65637
-	LIBFPTR_PARAM_REGISTRATIONS_COUNT             = 65638
-	LIBFPTR_PARAM_NO_ERROR_IF_NOT_SUPPORTED       = 65639
-	LIBFPTR_PARAM_OFD_EXCHANGE_STATUS             = 65640
-	LIBFPTR_PARAM_FN_ERROR_DATA                   = 65641
-	LIBFPTR_PARAM_FN_ERROR_CODE                   = 65642
-	LIBFPTR_PARAM_ENVD_MODE                       = 65643
-	LIBFPTR_PARAM_DOCUMENT_CLOSED                 = 65644
-	LIBFPTR_PARAM_JSON_DATA                       = 65645
-	LIBFPTR_PARAM_COMMAND_SUBSYSTEM               = 65646
-	LIBFPTR_PARAM_FN_OPERATION_TYPE               = 65647
-	LIBFPTR_PARAM_FN_STATE                        = 65648
-	LIBFPTR_PARAM_ENVD_MODE_ENABLED               = 65649
-	LIBFPTR_PARAM_SETTING_ID                      = 65650
-	LIBFPTR_PARAM_SETTING_VALUE                   = 65651
-	LIBFPTR_PARAM_MAPPING_KEY                     = 65652
-	LIBFPTR_PARAM_MAPPING_VALUE                   = 65653
-	LIBFPTR_PARAM_COMMODITY_PIECE                 = 65654
-	LIBFPTR_PARAM_POWER_SOURCE_TYPE               = 65655
-	LIBFPTR_PARAM_BATTERY_CHARGE                  = 65656
-	LIBFPTR_PARAM_VOLTAGE                         = 65657
-	LIBFPTR_PARAM_USE_BATTERY                     = 65658
-	LIBFPTR_PARAM_BATTERY_CHARGING                = 65659
-	LIBFPTR_PARAM_CAN_PRINT_WHILE_ON_BATTERY      = 65660
-	LIBFPTR_PARAM_MAC_ADDRESS                     = 65661
-	LIBFPTR_PARAM_FN_FISCAL                       = 65662
-	LIBFPTR_PARAM_NETWORK_ERROR                   = 65663
-	LIBFPTR_PARAM_OFD_ERROR                       = 65664
-	LIBFPTR_PARAM_FN_ERROR                        = 65665
-	LIBFPTR_PARAM_COMMAND_CODE                    = 65666
-	LIBFPTR_PARAM_PRINTER_TEMPERATURE             = 65667
-	LIBFPTR_PARAM_RECORDS_TYPE                    = 65668
-	LIBFPTR_PARAM_OFD_FISCAL_SIGN                 = 65669
-	LIBFPTR_PARAM_HAS_OFD_TICKET                  = 65670
-	LIBFPTR_PARAM_NO_SERIAL_NUMBER                = 65671
-	LIBFPTR_PARAM_RTC_FAULT                       = 65672
-	LIBFPTR_PARAM_SETTINGS_FAULT                  = 65673
-	LIBFPTR_PARAM_COUNTERS_FAULT                  = 65674
-	LIBFPTR_PARAM_USER_MEMORY_FAULT               = 65675
-	LIBFPTR_PARAM_SERVICE_COUNTERS_FAULT          = 65676
-	LIBFPTR_PARAM_ATTRIBUTES_FAULT                = 65677
-	LIBFPTR_PARAM_FN_FAULT                        = 65678
-	LIBFPTR_PARAM_INVALID_FN                      = 65679
-	LIBFPTR_PARAM_HARD_FAULT                      = 65680
-	LIBFPTR_PARAM_MEMORY_MANAGER_FAULT            = 65681
-	LIBFPTR_PARAM_SCRIPTS_FAULT                   = 65682
-	LIBFPTR_PARAM_FULL_RESET                      = 65683
-	LIBFPTR_PARAM_WAIT_FOR_REBOOT                 = 65684
-	LIBFPTR_PARAM_SCALE_PERCENT                   = 65685
-	LIBFPTR_PARAM_FN_NEED_REPLACEMENT             = 65686
-	LIBFPTR_PARAM_FN_RESOURCE_EXHAUSTED           = 65687
-	LIBFPTR_PARAM_FN_MEMORY_OVERFLOW              = 65688
-	LIBFPTR_PARAM_FN_OFD_TIMEOUT                  = 65689
-	LIBFPTR_PARAM_FN_CRITICAL_ERROR               = 65690
-	LIBFPTR_PARAM_OFD_MESSAGE_READ                = 65691
-	LIBFPTR_PARAM_DEVICE_MIN_FFD_VERSION          = 65692
-	LIBFPTR_PARAM_DEVICE_MAX_FFD_VERSION          = 65693
-	LIBFPTR_PARAM_DEVICE_UPTIME                   = 65694
-	LIBFPTR_PARAM_NOMENCLATURE_TYPE               = 65695
-	LIBFPTR_PARAM_GTIN                            = 65696
-	LIBFPTR_PARAM_FN_DOCUMENT_TYPE                = 65697
-	LIBFPTR_PARAM_NETWORK_ERROR_TEXT              = 65698
-	LIBFPTR_PARAM_FN_ERROR_TEXT                   = 65699
-	LIBFPTR_PARAM_OFD_ERROR_TEXT                  = 65700
-	LIBFPTR_PARAM_USER_SCRIPT_ID                  = 65701
-	LIBFPTR_PARAM_USER_SCRIPT_PARAMETER           = 65702
-	LIBFPTR_PARAM_USER_MEMORY_OPERATION           = 65703
-	LIBFPTR_PARAM_USER_MEMORY_DATA                = 65704
-	LIBFPTR_PARAM_USER_MEMORY_STRING              = 65705
-	LIBFPTR_PARAM_USER_MEMORY_ADDRESS             = 65706
-	LIBFPTR_PARAM_FN_PRESENT                      = 65707
-	LIBFPTR_PARAM_BLOCKED                         = 65708
-	LIBFPTR_PARAM_DOCUMENT_PRINTED                = 65709
-	LIBFPTR_PARAM_DISCOUNT_SUM                    = 65710
-	LIBFPTR_PARAM_SURCHARGE_SUM                   = 65711
-	LIBFPTR_PARAM_LK_USER_CODE                    = 65712
-	LIBFPTR_PARAM_LICENSE_COUNT                   = 65713
-	LIBFPTR_PARAM_DEFER                           = 65714
-	LIBFPTR_PARAM_CAP_54FZ                        = 65715
-	LIBFPTR_PARAM_CAP_MANUAL_CLICHE_CONTROL       = 65716
-	LIBFPTR_PARAM_CAP_PAYMENTS_COUNT              = 65717
-	LIBFPTR_PARAM_FIRMWARE_CHUNK_SIZE             = 65718
-	LIBFPTR_PARAM_FIRMWARE_CHUNK_DATA             = 65719
-	LIBFPTR_PARAM_FN_FLAGS                        = 65720
-	LIBFPTR_PARAM_PRINT_FOOTER                    = 65721
-	LIBFPTR_PARAM_PUBLIC_KEY                      = 65722
-	LIBFPTR_PARAM_MAGIC_NUMBER                    = 65723
-	LIBFPTR_PARAM_SIGN                            = 65724
-	LIBFPTR_PARAM_SOFT_NAME                       = 65725
-	LIBFPTR_PARAM_SESSION_CODE                    = 65726
-	LIBFPTR_PARAM_ETHERNET_CONFIG_TIMEOUT         = 65727
-	LIBFPTR_PARAM_ETHERNET_DHCP                   = 65728
-	LIBFPTR_PARAM_ETHERNET_IP                     = 65729
-	LIBFPTR_PARAM_ETHERNET_MASK                   = 65730
-	LIBFPTR_PARAM_ETHERNET_GATEWAY                = 65731
-	LIBFPTR_PARAM_ETHERNET_PORT                   = 65732
-	LIBFPTR_PARAM_ETHERNET_DNS_IP                 = 65733
-	LIBFPTR_PARAM_ETHERNET_DNS_STATIC             = 65734
-	LIBFPTR_PARAM_STORE_IN_JOURNAL                = 65735
-	LIBFPTR_PARAM_NEW_PLATFORM                    = 65736
-	LIBFPTR_PARAM_UNIT_RELEASE_VERSION            = 65737
-	LIBFPTR_PARAM_USE_VAT18                       = 65738
-	LIBFPTR_PARAM_TAG_NAME                        = 65739
-	LIBFPTR_PARAM_TAG_TYPE                        = 65740
-	LIBFPTR_PARAM_TAG_IS_COMPLEX                  = 65741
-	LIBFPTR_PARAM_TAG_IS_REPEATABLE               = 65742
-	LIBFPTR_PARAM_SHIFT_AUTO_OPENED               = 65743
-	LIBFPTR_PARAM_CONTAINER_FIRMWARE_VERSION      = 65744
-	LIBFPTR_PARAM_CONTAINER_CONFIGURATION_VERSION = 65745
-	LIBFPTR_PARAM_CONTAINER_BOOTLOADER_VERSION    = 65746
-	LIBFPTR_PARAM_CONTAINER_SCRIPTS_VERSION       = 65747
-	LIBFPTR_PARAM_PAPER_NEAR_END                  = 65748
-	LIBFPTR_PARAM_REPORT_ELECTRONICALLY           = 65749
-	LIBFPTR_PARAM_ACTIVATION_METHOD               = 65750
-	LIBFPTR_PARAM_KEYS                            = 65751
-	LIBFPTR_PARAM_UIN                             = 65752
-	LIBFPTR_PARAM_VERSION                         = 65753
-	LIBFPTR_PARAM_PUBLIC_KEY_SIGN                 = 65754
-	LIBFPTR_PARAM_CAP_DISABLE_PRINT_REPORTS       = 65755
-	LIBFPTR_PARAM_REGISTRATION_NUMBER             = 65756
-	LIBFPTR_PARAM_PIXEL_BUFFER                    = 65757
-	LIBFPTR_PARAM_REPEAT_NUMBER                   = 65758
-	LIBFPTR_PARAM_FIELD_TYPE                      = 65759
-	LIBFPTR_PARAM_MARKING_CODE                    = 65760
-	LIBFPTR_PARAM_CONTAINER_DIRECT_BOOT_VERSION   = 65761
-	LIBFPTR_PARAM_SCRIPT_NAME                     = 65762
-	LIBFPTR_PARAM_SCRIPT_HASH                     = 65763
-	LIBFPTR_PARAM_RECORDS_ID                      = 65764
-	LIBFPTR_PARAM_USER_SCRIPT_RESULT_1            = 65765
-	LIBFPTR_PARAM_USER_SCRIPT_RESULT_2            = 65766
-	LIBFPTR_PARAM_USER_SCRIPT_RESULT_3            = 65767
-	LIBFPTR_PARAM_USER_SCRIPT_RESULT_4            = 65768
-	LIBFPTR_PARAM_USER_SCRIPT_RESULT_5            = 65769
-	LIBFPTR_PARAM_IS_USER_SCRIPT                  = 65770
-	LIBFPTR_PARAM_DOCUMENT_NUMBER_END             = 65771
-	LIBFPTR_PARAM_SHIFT_NUMBER_END                = 65772
-	LIBFPTR_PARAM_SCRIPT_CODE                     = 65773
-	LIBFPTR_PARAM_SCRIPT_RESULT                   = 65774
-	LIBFPTR_PARAM_SCRIPT_TYPE                     = 65775
-	LIBFPTR_PARAM_WIFI_CONFIG_TIMEOUT             = 65776
-	LIBFPTR_PARAM_WIFI_DHCP                       = 65777
-	LIBFPTR_PARAM_WIFI_IP                         = 65778
-	LIBFPTR_PARAM_WIFI_MASK                       = 65779
-	LIBFPTR_PARAM_WIFI_GATEWAY                    = 65780
-	LIBFPTR_PARAM_WIFI_PORT                       = 65781
-	LIBFPTR_PARAM_UC_VERSION                      = 65782
-	LIBFPTR_PARAM_UC_AVAILABLE_MEMORY             = 65783
-	LIBFPTR_PARAM_UC_USED_MEMORY_BY_SUMS          = 65784
-	LIBFPTR_PARAM_UC_USED_MEMORY_BY_QUANTITIES    = 65785
-	LIBFPTR_PARAM_UC_LAYER_1                      = 65786
-	LIBFPTR_PARAM_UC_FLAGS_1                      = 65787
-	LIBFPTR_PARAM_UC_MASK_1                       = 65788
-	LIBFPTR_PARAM_UC_LAYER_VALUE_1                = 65789
-	LIBFPTR_PARAM_UC_LAYER_2                      = 65790
-	LIBFPTR_PARAM_UC_FLAGS_2                      = 65791
-	LIBFPTR_PARAM_UC_MASK_2                       = 65792
-	LIBFPTR_PARAM_UC_LAYER_VALUE_2                = 65793
-	LIBFPTR_PARAM_UC_LAYER_3                      = 65794
-	LIBFPTR_PARAM_UC_FLAGS_3                      = 65795
-	LIBFPTR_PARAM_UC_MASK_3                       = 65796
-	LIBFPTR_PARAM_UC_LAYER_VALUE_3                = 65797
-	LIBFPTR_PARAM_UC_LAYER_4                      = 65798
-	LIBFPTR_PARAM_UC_FLAGS_4                      = 65799
-	LIBFPTR_PARAM_UC_MASK_4                       = 65800
-	LIBFPTR_PARAM_UC_LAYER_VALUE_4                = 65801
-	LIBFPTR_PARAM_RECEIPTS_COUNT                  = 65802
-	LIBFPTR_PARAM_PAYMENTS_SUM_CASH               = 65803
-	LIBFPTR_PARAM_PAYMENTS_SUM_ELECTRONICALLY     = 65804
-	LIBFPTR_PARAM_PAYMENTS_SUM_PREPAID            = 65805
-	LIBFPTR_PARAM_PAYMENTS_SUM_CREDIT             = 65806
-	LIBFPTR_PARAM_PAYMENTS_SUM_OTHER              = 65807
-	LIBFPTR_PARAM_TAXES_SUM_VAT20                 = 65808
-	LIBFPTR_PARAM_TAXES_SUM_VAT120                = 65809
-	LIBFPTR_PARAM_TAXES_SUM_VAT10                 = 65810
-	LIBFPTR_PARAM_TAXES_SUM_VAT110                = 65811
-	LIBFPTR_PARAM_TAXES_SUM_VAT0                  = 65812
-	LIBFPTR_PARAM_TAXES_SUM_NO                    = 65813
-	LIBFPTR_PARAM_CORRECTIONS_COUNT               = 65814
-	LIBFPTR_PARAM_CORRECTIONS_SUM                 = 65815
-	LIBFPTR_PARAM_FN_COUNTERS_TYPE                = 65816
-	LIBFPTR_PARAM_FN_DAYS_REMAIN                  = 65817
-	LIBFPTR_PARAM_FREE_MEMORY                     = 65818
-	LIBFPTR_PARAM_FN_MAX_FFD_VERSION              = 65819
-	LIBFPTR_PARAM_RECEIPTS_SUM                    = 65820
-	LIBFPTR_PARAM_LICENSE_NAME                    = 65821
+	LIBFPTR_PARAM_TEXT                                             = 65536
+	LIBFPTR_PARAM_TEXT_WRAP                                        = 65537
+	LIBFPTR_PARAM_ALIGNMENT                                        = 65538
+	LIBFPTR_PARAM_FONT                                             = 65539
+	LIBFPTR_PARAM_FONT_DOUBLE_WIDTH                                = 65540
+	LIBFPTR_PARAM_FONT_DOUBLE_HEIGHT                               = 65541
+	LIBFPTR_PARAM_LINESPACING                                      = 65542
+	LIBFPTR_PARAM_BRIGHTNESS                                       = 65543
+	LIBFPTR_PARAM_MODEL                                            = 65544
+	LIBFPTR_PARAM_RECEIPT_TYPE                                     = 65545
+	LIBFPTR_PARAM_REPORT_TYPE                                      = 65546
+	LIBFPTR_PARAM_MODE                                             = 65547
+	LIBFPTR_PARAM_EXTERNAL_DEVICE_TYPE                             = 65548
+	LIBFPTR_PARAM_EXTERNAL_DEVICE_DATA                             = 65549
+	LIBFPTR_PARAM_FREQUENCY                                        = 65550
+	LIBFPTR_PARAM_DURATION                                         = 65551
+	LIBFPTR_PARAM_CUT_TYPE                                         = 65552
+	LIBFPTR_PARAM_DRAWER_ON_TIMEOUT                                = 65553
+	LIBFPTR_PARAM_DRAWER_OFF_TIMEOUT                               = 65554
+	LIBFPTR_PARAM_DRAWER_ON_QUANTITY                               = 65555
+	LIBFPTR_PARAM_TIMEOUT_ENQ                                      = 65556
+	LIBFPTR_PARAM_COMMAND_BUFFER                                   = 65557
+	LIBFPTR_PARAM_ANSWER_BUFFER                                    = 65558
+	LIBFPTR_PARAM_SERIAL_NUMBER                                    = 65559
+	LIBFPTR_PARAM_MANUFACTURER_CODE                                = 65560
+	LIBFPTR_PARAM_NO_NEED_ANSWER                                   = 65561
+	LIBFPTR_PARAM_INFO_DISCOUNT_SUM                                = 65562
+	LIBFPTR_PARAM_USE_ONLY_TAX_TYPE                                = 65563
+	LIBFPTR_PARAM_PAYMENT_TYPE                                     = 65564
+	LIBFPTR_PARAM_PAYMENT_SUM                                      = 65565
+	LIBFPTR_PARAM_REMAINDER                                        = 65566
+	LIBFPTR_PARAM_CHANGE                                           = 65567
+	LIBFPTR_PARAM_DEPARTMENT                                       = 65568
+	LIBFPTR_PARAM_TAX_TYPE                                         = 65569
+	LIBFPTR_PARAM_TAX_SUM                                          = 65570
+	LIBFPTR_PARAM_TAX_MODE                                         = 65571
+	LIBFPTR_PARAM_RECEIPT_ELECTRONICALLY                           = 65572
+	LIBFPTR_PARAM_USER_PASSWORD                                    = 65573
+	LIBFPTR_PARAM_SCALE                                            = 65574
+	LIBFPTR_PARAM_LEFT_MARGIN                                      = 65575
+	LIBFPTR_PARAM_BARCODE                                          = 65576
+	LIBFPTR_PARAM_BARCODE_TYPE                                     = 65577
+	LIBFPTR_PARAM_BARCODE_PRINT_TEXT                               = 65578
+	LIBFPTR_PARAM_BARCODE_VERSION                                  = 65579
+	LIBFPTR_PARAM_BARCODE_CORRECTION                               = 65580
+	LIBFPTR_PARAM_BARCODE_COLUMNS                                  = 65581
+	LIBFPTR_PARAM_BARCODE_INVERT                                   = 65582
+	LIBFPTR_PARAM_HEIGHT                                           = 65583
+	LIBFPTR_PARAM_WIDTH                                            = 65584
+	LIBFPTR_PARAM_FILENAME                                         = 65585
+	LIBFPTR_PARAM_PICTURE_NUMBER                                   = 65586
+	LIBFPTR_PARAM_DATA_TYPE                                        = 65587
+	LIBFPTR_PARAM_OPERATOR_ID                                      = 65588
+	LIBFPTR_PARAM_LOGICAL_NUMBER                                   = 65589
+	LIBFPTR_PARAM_DATE_TIME                                        = 65590
+	LIBFPTR_PARAM_FISCAL                                           = 65591
+	LIBFPTR_PARAM_SHIFT_STATE                                      = 65592
+	LIBFPTR_PARAM_CASHDRAWER_OPENED                                = 65593
+	LIBFPTR_PARAM_RECEIPT_PAPER_PRESENT                            = 65594
+	LIBFPTR_PARAM_COVER_OPENED                                     = 65595
+	LIBFPTR_PARAM_SUBMODE                                          = 65596
+	LIBFPTR_PARAM_RECEIPT_NUMBER                                   = 65597
+	LIBFPTR_PARAM_DOCUMENT_NUMBER                                  = 65598
+	LIBFPTR_PARAM_SHIFT_NUMBER                                     = 65599
+	LIBFPTR_PARAM_RECEIPT_SUM                                      = 65600
+	LIBFPTR_PARAM_RECEIPT_LINE_LENGTH                              = 65601
+	LIBFPTR_PARAM_RECEIPT_LINE_LENGTH_PIX                          = 65602
+	LIBFPTR_PARAM_MODEL_NAME                                       = 65603
+	LIBFPTR_PARAM_UNIT_VERSION                                     = 65604
+	LIBFPTR_PARAM_PRINTER_CONNECTION_LOST                          = 65605
+	LIBFPTR_PARAM_PRINTER_ERROR                                    = 65606
+	LIBFPTR_PARAM_CUT_ERROR                                        = 65607
+	LIBFPTR_PARAM_PRINTER_OVERHEAT                                 = 65608
+	LIBFPTR_PARAM_UNIT_TYPE                                        = 65609
+	LIBFPTR_PARAM_LICENSE_NUMBER                                   = 65610
+	LIBFPTR_PARAM_LICENSE_ENTERED                                  = 65611
+	LIBFPTR_PARAM_LICENSE                                          = 65612
+	LIBFPTR_PARAM_SUM                                              = 65613
+	LIBFPTR_PARAM_COUNT                                            = 65614
+	LIBFPTR_PARAM_COUNTER_TYPE                                     = 65615
+	LIBFPTR_PARAM_STEP_COUNTER_TYPE                                = 65616
+	LIBFPTR_PARAM_ERROR_TAG_NUMBER                                 = 65617
+	LIBFPTR_PARAM_TABLE                                            = 65618
+	LIBFPTR_PARAM_ROW                                              = 65619
+	LIBFPTR_PARAM_FIELD                                            = 65620
+	LIBFPTR_PARAM_FIELD_VALUE                                      = 65621
+	LIBFPTR_PARAM_FN_DATA_TYPE                                     = 65622
+	LIBFPTR_PARAM_TAG_NUMBER                                       = 65623
+	LIBFPTR_PARAM_TAG_VALUE                                        = 65624
+	LIBFPTR_PARAM_DOCUMENTS_COUNT                                  = 65625
+	LIBFPTR_PARAM_FISCAL_SIGN                                      = 65626
+	LIBFPTR_PARAM_DEVICE_FFD_VERSION                               = 65627
+	LIBFPTR_PARAM_FN_FFD_VERSION                                   = 65628
+	LIBFPTR_PARAM_FFD_VERSION                                      = 65629
+	LIBFPTR_PARAM_CHECK_SUM                                        = 65630
+	LIBFPTR_PARAM_COMMODITY_NAME                                   = 65631
+	LIBFPTR_PARAM_PRICE                                            = 65632
+	LIBFPTR_PARAM_QUANTITY                                         = 65633
+	LIBFPTR_PARAM_POSITION_SUM                                     = 65634
+	LIBFPTR_PARAM_FN_TYPE                                          = 65635
+	LIBFPTR_PARAM_FN_VERSION                                       = 65636
+	LIBFPTR_PARAM_REGISTRATIONS_REMAIN                             = 65637
+	LIBFPTR_PARAM_REGISTRATIONS_COUNT                              = 65638
+	LIBFPTR_PARAM_NO_ERROR_IF_NOT_SUPPORTED                        = 65639
+	LIBFPTR_PARAM_OFD_EXCHANGE_STATUS                              = 65640
+	LIBFPTR_PARAM_FN_ERROR_DATA                                    = 65641
+	LIBFPTR_PARAM_FN_ERROR_CODE                                    = 65642
+	LIBFPTR_PARAM_ENVD_MODE                                        = 65643
+	LIBFPTR_PARAM_DOCUMENT_CLOSED                                  = 65644
+	LIBFPTR_PARAM_JSON_DATA                                        = 65645
+	LIBFPTR_PARAM_COMMAND_SUBSYSTEM                                = 65646
+	LIBFPTR_PARAM_FN_OPERATION_TYPE                                = 65647
+	LIBFPTR_PARAM_FN_STATE                                         = 65648
+	LIBFPTR_PARAM_ENVD_MODE_ENABLED                                = 65649
+	LIBFPTR_PARAM_SETTING_ID                                       = 65650
+	LIBFPTR_PARAM_SETTING_VALUE                                    = 65651
+	LIBFPTR_PARAM_MAPPING_KEY                                      = 65652
+	LIBFPTR_PARAM_MAPPING_VALUE                                    = 65653
+	LIBFPTR_PARAM_COMMODITY_PIECE                                  = 65654
+	LIBFPTR_PARAM_POWER_SOURCE_TYPE                                = 65655
+	LIBFPTR_PARAM_BATTERY_CHARGE                                   = 65656
+	LIBFPTR_PARAM_VOLTAGE                                          = 65657
+	LIBFPTR_PARAM_USE_BATTERY                                      = 65658
+	LIBFPTR_PARAM_BATTERY_CHARGING                                 = 65659
+	LIBFPTR_PARAM_CAN_PRINT_WHILE_ON_BATTERY                       = 65660
+	LIBFPTR_PARAM_MAC_ADDRESS                                      = 65661
+	LIBFPTR_PARAM_FN_FISCAL                                        = 65662
+	LIBFPTR_PARAM_NETWORK_ERROR                                    = 65663
+	LIBFPTR_PARAM_OFD_ERROR                                        = 65664
+	LIBFPTR_PARAM_FN_ERROR                                         = 65665
+	LIBFPTR_PARAM_COMMAND_CODE                                     = 65666
+	LIBFPTR_PARAM_PRINTER_TEMPERATURE                              = 65667
+	LIBFPTR_PARAM_RECORDS_TYPE                                     = 65668
+	LIBFPTR_PARAM_OFD_FISCAL_SIGN                                  = 65669
+	LIBFPTR_PARAM_HAS_OFD_TICKET                                   = 65670
+	LIBFPTR_PARAM_NO_SERIAL_NUMBER                                 = 65671
+	LIBFPTR_PARAM_RTC_FAULT                                        = 65672
+	LIBFPTR_PARAM_SETTINGS_FAULT                                   = 65673
+	LIBFPTR_PARAM_COUNTERS_FAULT                                   = 65674
+	LIBFPTR_PARAM_USER_MEMORY_FAULT                                = 65675
+	LIBFPTR_PARAM_SERVICE_COUNTERS_FAULT                           = 65676
+	LIBFPTR_PARAM_ATTRIBUTES_FAULT                                 = 65677
+	LIBFPTR_PARAM_FN_FAULT                                         = 65678
+	LIBFPTR_PARAM_INVALID_FN                                       = 65679
+	LIBFPTR_PARAM_HARD_FAULT                                       = 65680
+	LIBFPTR_PARAM_MEMORY_MANAGER_FAULT                             = 65681
+	LIBFPTR_PARAM_SCRIPTS_FAULT                                    = 65682
+	LIBFPTR_PARAM_FULL_RESET                                       = 65683
+	LIBFPTR_PARAM_WAIT_FOR_REBOOT                                  = 65684
+	LIBFPTR_PARAM_SCALE_PERCENT                                    = 65685
+	LIBFPTR_PARAM_FN_NEED_REPLACEMENT                              = 65686
+	LIBFPTR_PARAM_FN_RESOURCE_EXHAUSTED                            = 65687
+	LIBFPTR_PARAM_FN_MEMORY_OVERFLOW                               = 65688
+	LIBFPTR_PARAM_FN_OFD_TIMEOUT                                   = 65689
+	LIBFPTR_PARAM_FN_CRITICAL_ERROR                                = 65690
+	LIBFPTR_PARAM_OFD_MESSAGE_READ                                 = 65691
+	LIBFPTR_PARAM_DEVICE_MIN_FFD_VERSION                           = 65692
+	LIBFPTR_PARAM_DEVICE_MAX_FFD_VERSION                           = 65693
+	LIBFPTR_PARAM_DEVICE_UPTIME                                    = 65694
+	LIBFPTR_PARAM_NOMENCLATURE_TYPE                                = 65695
+	LIBFPTR_PARAM_GTIN                                             = 65696
+	LIBFPTR_PARAM_FN_DOCUMENT_TYPE                                 = 65697
+	LIBFPTR_PARAM_NETWORK_ERROR_TEXT                               = 65698
+	LIBFPTR_PARAM_FN_ERROR_TEXT                                    = 65699
+	LIBFPTR_PARAM_OFD_ERROR_TEXT                                   = 65700
+	LIBFPTR_PARAM_USER_SCRIPT_ID                                   = 65701
+	LIBFPTR_PARAM_USER_SCRIPT_PARAMETER                            = 65702
+	LIBFPTR_PARAM_USER_MEMORY_OPERATION                            = 65703
+	LIBFPTR_PARAM_USER_MEMORY_DATA                                 = 65704
+	LIBFPTR_PARAM_USER_MEMORY_STRING                               = 65705
+	LIBFPTR_PARAM_USER_MEMORY_ADDRESS                              = 65706
+	LIBFPTR_PARAM_FN_PRESENT                                       = 65707
+	LIBFPTR_PARAM_BLOCKED                                          = 65708
+	LIBFPTR_PARAM_DOCUMENT_PRINTED                                 = 65709
+	LIBFPTR_PARAM_DISCOUNT_SUM                                     = 65710
+	LIBFPTR_PARAM_SURCHARGE_SUM                                    = 65711
+	LIBFPTR_PARAM_LK_USER_CODE                                     = 65712
+	LIBFPTR_PARAM_LICENSE_COUNT                                    = 65713
+	LIBFPTR_PARAM_DEFER                                            = 65714
+	LIBFPTR_PARAM_CAP_54FZ                                         = 65715
+	LIBFPTR_PARAM_CAP_MANUAL_CLICHE_CONTROL                        = 65716
+	LIBFPTR_PARAM_CAP_PAYMENTS_COUNT                               = 65717
+	LIBFPTR_PARAM_FIRMWARE_CHUNK_SIZE                              = 65718
+	LIBFPTR_PARAM_FIRMWARE_CHUNK_DATA                              = 65719
+	LIBFPTR_PARAM_FN_FLAGS                                         = 65720
+	LIBFPTR_PARAM_PRINT_FOOTER                                     = 65721
+	LIBFPTR_PARAM_PUBLIC_KEY                                       = 65722
+	LIBFPTR_PARAM_MAGIC_NUMBER                                     = 65723
+	LIBFPTR_PARAM_SIGN                                             = 65724
+	LIBFPTR_PARAM_SOFT_NAME                                        = 65725
+	LIBFPTR_PARAM_SESSION_CODE                                     = 65726
+	LIBFPTR_PARAM_ETHERNET_CONFIG_TIMEOUT                          = 65727
+	LIBFPTR_PARAM_ETHERNET_DHCP                                    = 65728
+	LIBFPTR_PARAM_ETHERNET_IP                                      = 65729
+	LIBFPTR_PARAM_ETHERNET_MASK                                    = 65730
+	LIBFPTR_PARAM_ETHERNET_GATEWAY                                 = 65731
+	LIBFPTR_PARAM_ETHERNET_PORT                                    = 65732
+	LIBFPTR_PARAM_ETHERNET_DNS_IP                                  = 65733
+	LIBFPTR_PARAM_ETHERNET_DNS_STATIC                              = 65734
+	LIBFPTR_PARAM_STORE_IN_JOURNAL                                 = 65735
+	LIBFPTR_PARAM_NEW_PLATFORM                                     = 65736
+	LIBFPTR_PARAM_UNIT_RELEASE_VERSION                             = 65737
+	LIBFPTR_PARAM_USE_VAT18                                        = 65738
+	LIBFPTR_PARAM_TAG_NAME                                         = 65739
+	LIBFPTR_PARAM_TAG_TYPE                                         = 65740
+	LIBFPTR_PARAM_TAG_IS_COMPLEX                                   = 65741
+	LIBFPTR_PARAM_TAG_IS_REPEATABLE                                = 65742
+	LIBFPTR_PARAM_SHIFT_AUTO_OPENED                                = 65743
+	LIBFPTR_PARAM_CONTAINER_FIRMWARE_VERSION                       = 65744
+	LIBFPTR_PARAM_CONTAINER_CONFIGURATION_VERSION                  = 65745
+	LIBFPTR_PARAM_CONTAINER_BOOTLOADER_VERSION                     = 65746
+	LIBFPTR_PARAM_CONTAINER_SCRIPTS_VERSION                        = 65747
+	LIBFPTR_PARAM_PAPER_NEAR_END                                   = 65748
+	LIBFPTR_PARAM_REPORT_ELECTRONICALLY                            = 65749
+	LIBFPTR_PARAM_ACTIVATION_METHOD                                = 65750
+	LIBFPTR_PARAM_KEYS                                             = 65751
+	LIBFPTR_PARAM_UIN                                              = 65752
+	LIBFPTR_PARAM_VERSION                                          = 65753
+	LIBFPTR_PARAM_PUBLIC_KEY_SIGN                                  = 65754
+	LIBFPTR_PARAM_CAP_DISABLE_PRINT_REPORTS                        = 65755
+	LIBFPTR_PARAM_REGISTRATION_NUMBER                              = 65756
+	LIBFPTR_PARAM_PIXEL_BUFFER                                     = 65757
+	LIBFPTR_PARAM_REPEAT_NUMBER                                    = 65758
+	LIBFPTR_PARAM_FIELD_TYPE                                       = 65759
+	LIBFPTR_PARAM_MARKING_CODE                                     = 65760
+	LIBFPTR_PARAM_CONTAINER_DIRECT_BOOT_VERSION                    = 65761
+	LIBFPTR_PARAM_SCRIPT_NAME                                      = 65762
+	LIBFPTR_PARAM_SCRIPT_HASH                                      = 65763
+	LIBFPTR_PARAM_RECORDS_ID                                       = 65764
+	LIBFPTR_PARAM_USER_SCRIPT_RESULT_1                             = 65765
+	LIBFPTR_PARAM_USER_SCRIPT_RESULT_2                             = 65766
+	LIBFPTR_PARAM_USER_SCRIPT_RESULT_3                             = 65767
+	LIBFPTR_PARAM_USER_SCRIPT_RESULT_4                             = 65768
+	LIBFPTR_PARAM_USER_SCRIPT_RESULT_5                             = 65769
+	LIBFPTR_PARAM_IS_USER_SCRIPT                                   = 65770
+	LIBFPTR_PARAM_DOCUMENT_NUMBER_END                              = 65771
+	LIBFPTR_PARAM_SHIFT_NUMBER_END                                 = 65772
+	LIBFPTR_PARAM_SCRIPT_CODE                                      = 65773
+	LIBFPTR_PARAM_SCRIPT_RESULT                                    = 65774
+	LIBFPTR_PARAM_SCRIPT_TYPE                                      = 65775
+	LIBFPTR_PARAM_WIFI_CONFIG_TIMEOUT                              = 65776
+	LIBFPTR_PARAM_WIFI_DHCP                                        = 65777
+	LIBFPTR_PARAM_WIFI_IP                                          = 65778
+	LIBFPTR_PARAM_WIFI_MASK                                        = 65779
+	LIBFPTR_PARAM_WIFI_GATEWAY                                     = 65780
+	LIBFPTR_PARAM_WIFI_PORT                                        = 65781
+	LIBFPTR_PARAM_UC_VERSION                                       = 65782
+	LIBFPTR_PARAM_UC_AVAILABLE_MEMORY                              = 65783
+	LIBFPTR_PARAM_UC_USED_MEMORY_BY_SUMS                           = 65784
+	LIBFPTR_PARAM_UC_USED_MEMORY_BY_QUANTITIES                     = 65785
+	LIBFPTR_PARAM_UC_LAYER_1                                       = 65786
+	LIBFPTR_PARAM_UC_FLAGS_1                                       = 65787
+	LIBFPTR_PARAM_UC_MASK_1                                        = 65788
+	LIBFPTR_PARAM_UC_LAYER_VALUE_1                                 = 65789
+	LIBFPTR_PARAM_UC_LAYER_2                                       = 65790
+	LIBFPTR_PARAM_UC_FLAGS_2                                       = 65791
+	LIBFPTR_PARAM_UC_MASK_2                                        = 65792
+	LIBFPTR_PARAM_UC_LAYER_VALUE_2                                 = 65793
+	LIBFPTR_PARAM_UC_LAYER_3                                       = 65794
+	LIBFPTR_PARAM_UC_FLAGS_3                                       = 65795
+	LIBFPTR_PARAM_UC_MASK_3                                        = 65796
+	LIBFPTR_PARAM_UC_LAYER_VALUE_3                                 = 65797
+	LIBFPTR_PARAM_UC_LAYER_4                                       = 65798
+	LIBFPTR_PARAM_UC_FLAGS_4                                       = 65799
+	LIBFPTR_PARAM_UC_MASK_4                                        = 65800
+	LIBFPTR_PARAM_UC_LAYER_VALUE_4                                 = 65801
+	LIBFPTR_PARAM_RECEIPTS_COUNT                                   = 65802
+	LIBFPTR_PARAM_PAYMENTS_SUM_CASH                                = 65803
+	LIBFPTR_PARAM_PAYMENTS_SUM_ELECTRONICALLY                      = 65804
+	LIBFPTR_PARAM_PAYMENTS_SUM_PREPAID                             = 65805
+	LIBFPTR_PARAM_PAYMENTS_SUM_CREDIT                              = 65806
+	LIBFPTR_PARAM_PAYMENTS_SUM_OTHER                               = 65807
+	LIBFPTR_PARAM_TAXES_SUM_VAT20                                  = 65808
+	LIBFPTR_PARAM_TAXES_SUM_VAT120                                 = 65809
+	LIBFPTR_PARAM_TAXES_SUM_VAT10                                  = 65810
+	LIBFPTR_PARAM_TAXES_SUM_VAT110                                 = 65811
+	LIBFPTR_PARAM_TAXES_SUM_VAT0                                   = 65812
+	LIBFPTR_PARAM_TAXES_SUM_NO                                     = 65813
+	LIBFPTR_PARAM_CORRECTIONS_COUNT                                = 65814
+	LIBFPTR_PARAM_CORRECTIONS_SUM                                  = 65815
+	LIBFPTR_PARAM_FN_COUNTERS_TYPE                                 = 65816
+	LIBFPTR_PARAM_FN_DAYS_REMAIN                                   = 65817
+	LIBFPTR_PARAM_FREE_MEMORY                                      = 65818
+	LIBFPTR_PARAM_FN_MAX_FFD_VERSION                               = 65819
+	LIBFPTR_PARAM_RECEIPTS_SUM                                     = 65820
+	LIBFPTR_PARAM_LICENSE_NAME                                     = 65821
+	LIBFPTR_PARAM_UNIVERSAL_COUNTERS_FAULT                         = 65822
+	LIBFPTR_PARAM_USE_LICENSES                                     = 65823
+	LIBFPTR_PARAM_LICENSE_VALID_FROM                               = 65824
+	LIBFPTR_PARAM_LICENSE_VALID_UNTIL                              = 65825
+	LIBFPTR_PARAM_MARKING_CODE_TYPE                                = 65826
+	LIBFPTR_PARAM_SETTING_NAME                                     = 65827
+	LIBFPTR_PARAM_SETTING_TYPE                                     = 65828
+	LIBFPTR_PARAM_FONT_WIDTH                                       = 65829
+	LIBFPTR_PARAM_REMOTE_CALL                                      = 65830
+	LIBFPTR_PARAM_SCRIPT_PARAMS                                    = 65831
+	LIBFPTR_PARAM_IGNORE_EMPTY                                     = 65832
+	LIBFPTR_PARAM_METHOD_DATA                                      = 65833
+	LIBFPTR_PARAM_METHOD_RESULT                                    = 65834
+	LIBFPTR_PARAM_RPC_SERVER_OS                                    = 65835
+	LIBFPTR_PARAM_RPC_SERVER_VERSION                               = 65836
+	LIBFPTR_PARAM_RPC_DRIVER_VERSION                               = 65837
+	LIBFPTR_PARAM_LOCKED                                           = 65838
+	LIBFPTR_PARAM_BOUND                                            = 65839
+	LIBFPTR_PARAM_COMMODITIES_TABLE_FAULT                          = 65840
+	LIBFPTR_PARAM_HAS_ADDITIONAL_DATA                              = 65841
+	LIBFPTR_PARAM_FISCAL_SIGN_ARCHIVE                              = 65842
+	LIBFPTR_PARAM_COMMAND_GROUP                                    = 65843
+	LIBFPTR_PARAM_ERROR_CODE                                       = 65844
+	LIBFPTR_PARAM_MARKING_WAIT_FOR_VALIDATION_RESULT               = 65845
+	LIBFPTR_PARAM_MARKING_CODE_STATUS                              = 65846
+	LIBFPTR_PARAM_MARKING_CODE_VALIDATION_RESULT                   = 65847
+	LIBFPTR_PARAM_MARKING_CODE_OFFLINE_VALIDATION_ERROR            = 65848
+	LIBFPTR_PARAM_MARKING_CODE_ONLINE_VALIDATION_ERROR             = 65849
+	LIBFPTR_PARAM_MARKING_CODE_VALIDATION_READY                    = 65850
+	LIBFPTR_PARAM_MEASUREMENT_UNIT                                 = 65851
+	LIBFPTR_PARAM_MARKING_PROCESSING_MODE                          = 65852
+	LIBFPTR_PARAM_MARKING_FRACTIONAL_QUANTITY                      = 65853
+	LIBFPTR_PARAM_PRODUCT_CODE                                     = 65854
+	LIBFPTR_PARAM_TRADE_MARKED_PRODUCTS                            = 65855
+	LIBFPTR_PARAM_INSURANCE_ACTIVITY                               = 65856
+	LIBFPTR_PARAM_PAWN_SHOP_ACTIVITY                               = 65857
+	LIBFPTR_PARAM_TLV_LIST                                         = 65858
+	LIBFPTR_PARAM_CHECK_MARKING_SERVER_READY                       = 65859
+	LIBFPTR_PARAM_MARKING_SERVER_RESPONSE_TIME                     = 65860
+	LIBFPTR_PARAM_MARKING_SERVER_ERROR_CODE                        = 65861
+	LIBFPTR_PARAM_MARKING_SERVER_ERROR_DESCRIPTION                 = 65862
+	LIBFPTR_PARAM_ISM_ERROR                                        = 65863
+	LIBFPTR_PARAM_ISM_ERROR_TEXT                                   = 65864
+	LIBFPTR_PARAM_MARKING_MODE_CHECKING_STATUS                     = 65865
+	LIBFPTR_PARAM_MARK_CHECKING_COUNT                              = 65866
+	LIBFPTR_PARAM_MARK_SOLD_COUNT                                  = 65867
+	LIBFPTR_PARAM_NOTICE_IS_BEGIN                                  = 65868
+	LIBFPTR_PARAM_NOTICE_FREE_MEMORY                               = 65869
+	LIBFPTR_PARAM_NOTICE_COUNT                                     = 65870
+	LIBFPTR_PARAM_MARKING_NOT_SEND_TO_SERVER                       = 65871
+	LIBFPTR_PARAM_DOCUMENT_TYPE                                    = 65872
+	LIBFPTR_PARAM_PRINT_REPORT                                     = 65873
+	LIBFPTR_PARAM_FN_EXECUTION                                     = 65874
+	LIBFPTR_PARAM_MCU_SN                                           = 65875
+	LIBFPTR_PARAM_MCU_PART_ID                                      = 65876
+	LIBFPTR_PARAM_MCU_PART_NAME                                    = 65877
+	LIBFPTR_PARAM_IS_REQUEST_SENT                                  = 65878
+	LIBFPTR_PARAM_FN_CHECK_MARK_TIME                               = 65879
+	LIBFPTR_PARAM_SENDING_MARK_TIME                                = 65880
+	LIBFPTR_PARAM_MARKING_SERVER_EXCHANGE_TIME                     = 65881
+	LIBFPTR_PARAM_FULL_SENDING_MARK_TIME                           = 65882
+	LIBFPTR_PARAM_MARK_CHECKING_STATUS_IN_CASH                     = 65883
+	LIBFPTR_PARAM_MARK_CHECKING_TYPE_IN_CASH                       = 65884
+	LIBFPTR_PARAM_MARK_CHECKING_STAGE_IN_CASH                      = 65885
+	LIBFPTR_PARAM_MARKING_CODE_ONLINE_VALIDATION_RESULT            = 65886
+	LIBFPTR_PARAM_MARKING_CODE_ONLINE_VALIDATION_ERROR_DESCRIPTION = 65887
+	LIBFPTR_PARAM_FN_CONTAINS_KEYS_UPDATER_SERVER_URI              = 65888
+	LIBFPTR_PARAM_CLEAR_MARKING_TABLE                              = 65889
+	LIBFPTR_PARAM_MODULE_ADDRESS                                   = 65890
+	LIBFPTR_PARAM_SEGMENT_ADDRESS                                  = 65891
+	LIBFPTR_PARAM_LAST_SUCCESSFUL_OKP                              = 65892
+	LIBFPTR_PARAM_FN_SERIAL_NUMBER                                 = 65893
+	LIBFPTR_PARAM_ECR_REGISTRATION_NUMBER                          = 65894
+	LIBFPTR_PARAM_OFD_VATIN                                        = 65895
+	LIBFPTR_PARAM_FNS_URL                                          = 65896
+	LIBFPTR_PARAM_MACHINE_NUMBER                                   = 65897
+	LIBFPTR_PARAM_MARKING_PRODUCT_ID                               = 65898
+	LIBFPTR_PARAM_TIMEOUT                                          = 65899
+	LIBFPTR_PARAM_PRINT_UPDATE_FNM_KEYS_REPORT                     = 65900
+	LIBFPTR_PARAM_FN_KEYS_UPDATER_SERVER_URI                       = 65901
+	LIBFPTR_PARAM_DOCUMENT_ELECTRONICALLY                          = 65902
+	LIBFPTR_PARAM_FORMAT_TEXT                                      = 65903
+	LIBFPTR_PARAM_RECEIPT_SIZE                                     = 65904
+	LIBFPTR_PARAM_MARK_SIZE                                        = 65905
+	LIBFPTR_PARAM_MCU_TEMPERATURE                                  = 65906
+	LIBFPTR_PARAM_DATA_FOR_SEND_IS_EMPTY                           = 65907
+	LIBFPTR_PARAM_AVAILABLE_CLOSING                                = 65908
+	LIBFPTR_PARAM_AVAILABLE_CANCELLATION                           = 65909
+	LIBFPTR_PARAM_AVAILABLE_POSITION_ADDING                        = 65910
+	LIBFPTR_PARAM_AVAILABLE_PAYMENT                                = 65911
+	LIBFPTR_PARAM_AVAILABLE_TOTAL                                  = 65912
+	LIBFPTR_PARAM_AVAILABLE_ATTRIBUTES_ADDING                      = 65913
+	LIBFPTR_PARAM_OPERATOR_REGISTERED                              = 65914
+	LIBFPTR_PARAM_DEVICE_PLATFORM_VERSION                          = 65915
+	LIBFPTR_PARAM_GUID                                             = 65916
+	LIBFPTR_PARAM_PATTERN_REGISTERS                                = 65917
+	LIBFPTR_PARAM_PATTERN_TAGS                                     = 65918
+	LIBFPTR_PARAM_PATTERN_SETTINGS                                 = 65919
+	LIBFPTR_PARAM_VENDING                                          = 65920
+	LIBFPTR_PARAM_CATERING                                         = 65921
+	LIBFPTR_PARAM_WHOLESALE                                        = 65922
+	LIBFPTR_PARAM_REGISTRATION_POSITION_FORM                       = 65923
+	LIBFPTR_PARAM_MERGE_POSITIONS                                  = 65924
+	LIBFPTR_PARAM_DATAFLASH_JEDEC_ID                               = 65925
+	LIBFPTR_PARAM_DATAFLASH_NAME                                   = 65926
+	LIBFPTR_PARAM_DATAFLASH_SIZE                                   = 65927
+	LIBFPTR_PARAM_FRAM_EEPROM_NAME                                 = 65928
+	LIBFPTR_PARAM_FRAM_EEPROM_SIZE                                 = 65929
+	LIBFPTR_PARAM_MARKING_NOT_FORM_REQUEST                         = 65930
+	LIBFPTR_PARAM_PRINT_ENTITY_TYPE                                = 65931
+	LIBFPTR_PARAM_RECEIPT_TAPE_PATH_LENGTH                         = 65932
+	LIBFPTR_PARAM_LICENSE_INDEX                                    = 65933
+	LIBFPTR_PARAM_IS_LICENSE_VALID                                 = 65934
+	LIBFPTR_PARAM_RECEIPT_PERCENTAGE_SIZE                          = 65935
+	LIBFPTR_PARAM_ADDITIONAL_ATTRIBUTE                             = 65936
+	LIBFPTR_PARAM_ADDITIONAL_DATA                                  = 65937
+	LIBFPTR_PARAM_ELECTRONICALLY_PAYMENT_METHOD                    = 65938
+	LIBFPTR_PARAM_ELECTRONICALLY_ID                                = 65939
+	LIBFPTR_PARAM_ELECTRONICALLY_ADD_INFO                          = 65940
+	LIBFPTR_PARAM_LAST_SUCCESS_FNM_UPDATE_KEYS_DATE_TIME           = 65941
+	LIBFPTR_PARAM_LAST_ATTEMPTION_FNM_UPDATE_KEYS_DATE_TIME        = 65942
+	LIBFPTR_PARAM_COUNT_ATTEMPTION_FNM_UPDATE_KEYS                 = 65943
 )
 
 const (
@@ -649,9 +789,76 @@ const (
 	LIBFPTR_ERROR_INVALID_UC_COUNTER                      = 236
 	LIBFPTR_ERROR_INVALID_UC_TAG                          = 237
 	LIBFPTR_ERROR_INVALID_UC_IDX                          = 238
-	LIBFPTR_ERROR_INVALID_UC_EMPTY_FILTER                 = 239
+	LIBFPTR_ERROR_INVALID_UC_SIZE                         = 239
 	LIBFPTR_ERROR_INVALID_UC_CONFIG                       = 240
 	LIBFPTR_ERROR_CONNECTION_LOST                         = 241
+	LIBFPTR_ERROR_UNIVERSAL_COUNTERS_FAULT                = 242
+	LIBFPTR_ERROR_INVALID_TAX_SUM                         = 243
+	LIBFPTR_ERROR_INVALID_MARKING_CODE_TYPE               = 244
+	LIBFPTR_ERROR_LICENSE_HARD_FAULT                      = 245
+	LIBFPTR_ERROR_LICENSE_INVALID_SIGN                    = 246
+	LIBFPTR_ERROR_LICENSE_INVALID_SERIAL                  = 247
+	LIBFPTR_ERROR_LICENSE_INVALID_TIME                    = 248
+	LIBFPTR_ERROR_DOCUMENT_CANCELED                       = 249
+	LIBFPTR_ERROR_INVALID_SCRIPT_PARAMS                   = 250
+	LIBFPTR_ERROR_CLICHE_TOO_LONG                         = 251
+	LIBFPTR_ERROR_COMMODITIES_TABLE_FAULT                 = 252
+	LIBFPTR_ERROR_COMMODITIES_TABLE                       = 253
+	LIBFPTR_ERROR_COMMODITIES_TABLE_INVALID_TAG           = 254
+	LIBFPTR_ERROR_COMMODITIES_TABLE_INVALID_TAG_SIZE      = 255
+	LIBFPTR_ERROR_COMMODITIES_TABLE_NO_TAG_DATA           = 256
+	LIBFPTR_ERROR_COMMODITIES_TABLE_NO_FREE_MEMORY        = 257
+	LIBFPTR_ERROR_INVALID_CACHE                           = 258
+	LIBFPTR_ERROR_SCHEDULER_NOT_READY                     = 259
+	LIBFPTR_ERROR_SCHEDULER_INVALID_TASK                  = 260
+	LIBFPTR_ERROR_MINIPOS_NO_POSITION_PAYMENT             = 261
+	LIBFPTR_ERROR_MINIPOS_COMMAND_TIME_OUT                = 262
+	LIBFPTR_ERROR_MINIPOS_MODE_FR_DISABLED                = 263
+	LIBFPTR_ERROR_ENTRY_NOT_FOUND_IN_OTP                  = 264
+	LIBFPTR_ERROR_EXCISABLE_COMMODITY_WITHOUT_EXCISE      = 265
+	LIBFPTR_ERROR_BARCODE_TYPE_NOT_SUPPORTED              = 266
+	LIBFPTR_ERROR_OVERLAY_DATA_OVERFLOW                   = 267
+	LIBFPTR_ERROR_INVALID_MODULE_ADDRESS                  = 268
+	LIBFPTR_ERROR_ECR_MODEL_NOT_SUPPORTED                 = 269
+	LIBFPTR_ERROR_PAID_NOT_REQUIRED                       = 270
+	LIBFPTR_ERROR_NON_PRINTABLE_CHAR                      = 271
+	LIBFPTR_ERROR_INVALID_USER_TAG                        = 272
+	LIBFPTR_ERROR_COMMODITIES_TABLE_ITERATION_STOPPED     = 273
+	LIBFPTR_ERROR_COMMODITIES_TABLE_INVALID_CSV_FORMAT    = 274
+	LIBFPTR_ERROR_MINIPOS_NO_FILE_ON_USB_STORE            = 275
+	LIBFPTR_ERROR_MINIPOS_NO_AGENT_FISCAL_PROPERTY        = 276
+	LIBFPTR_ERROR_NO_CONNECTION_WITH_PRINT_SERVICE        = 277
+	LIBFPTR_ERROR_UNIVERSAL_COUNTERS_ARE_DISABLED         = 278
+)
+
+const (
+	LIBFPTR_ERROR_BASE_MARKING                        = 400
+	LIBFPTR_ERROR_MARKING_CODE_VALIDATION_IN_PROGRESS = 401
+	LIBFPTR_ERROR_NO_CONNECTION_WITH_SERVER           = 402
+	LIBFPTR_ERROR_MARKING_CODE_VALIDATION_CANCELED    = 403
+	LIBFPTR_ERROR_INVALID_MARKING_CODE_STATUS         = 404
+	LIBFPTR_ERROR_INVALID_GS1                         = 405
+	LIBFPTR_ERROR_MARKING_WORK_DENIED                 = 406
+	LIBFPTR_ERROR_MARKING_WORK_TEMPORARY_BLOCKED      = 407
+	LIBFPTR_ERROR_MARKS_OVERFLOW                      = 408
+	LIBFPTR_ERROR_INVALID_MARKING_CODE                = 409
+	LIBFPTR_ERROR_INVALID_STATE                       = 410
+	LIBFPTR_ERROR_OFD_EXCHANGE                        = 411
+	LIBFPTR_ERROR_INVALID_MEASUREMENT_UNIT            = 412
+	LIBFPTR_ERROR_OPERATION_DENIED_IN_CURRENT_FFD     = 413
+	LIBFPTR_ERROR_MARKING_OPERATION_DENIED            = 414
+	LIBFPTR_ERROR_NO_DATA_TO_SEND                     = 415
+	LIBFPTR_ERROR_NO_MARKED_POSITION                  = 416
+	LIBFPTR_ERROR_HAS_NOT_SEND_NOTICES                = 417
+	LIBFPTR_ERROR_UPDATE_KEYS_REQUIRED                = 418
+	LIBFPTR_ERROR_UPDATE_KEYS_SERVICE                 = 419
+	LIBFPTR_ERROR_MARK_NOT_CHECKED                    = 420
+	LIBFPTR_ERROR_MARK_CHECK_TIMEOUT_EXPIRED          = 421
+	LIBFPTR_ERROR_NO_MARKING_CODE_IN_TABLE            = 422
+	LIBFPTR_ERROR_CHEKING_MARK_IN_PROGRESS            = 423
+	LIBFPTR_ERROR_INVALID_SERVER_ADDRESS              = 424
+	LIBFPTR_ERROR_UPDATE_KEYS_TIMEOUT                 = 425
+	LIBFPTR_ERROR_PROPERTY_FOR_MARKING_POSITION_ONLY  = 426
 )
 
 const (
@@ -659,6 +866,8 @@ const (
 	LIBFPTR_ERROR_RECEIPT_PARSE_ERROR            = 501
 	LIBFPTR_ERROR_INTERRUPTED_BY_PREVIOUS_ERRORS = 502
 	LIBFPTR_ERROR_DRIVER_SCRIPT_ERROR            = 503
+	LIBFPTR_ERROR_VALIDATE_FUNC_NOT_FOUND        = 504
+	LIBFPTR_ERROR_WEB_FAIL                       = 505
 )
 
 const (
@@ -786,6 +995,7 @@ const (
 	LIBFPTR_RT_DISCOUNTS                      = 20
 	LIBFPTR_RT_JOURNAL_DOCUMENT_BY_NUMBERS    = 21
 	LIBFPTR_RT_JOURNAL_DOCUMENT_BY_SHIFTS     = 22
+	LIBFPTR_RT_CLOSE_SHIFT_REPORTS            = 23
 )
 
 const (
@@ -799,6 +1009,7 @@ const (
 	LIBFPTR_PT_8              = 7
 	LIBFPTR_PT_9              = 8
 	LIBFPTR_PT_10             = 9
+	LIBFPTR_PT_ADD_INFO       = 10
 )
 
 const (
@@ -811,6 +1022,11 @@ const (
 	LIBFPTR_TAX_NO         = 6
 	LIBFPTR_TAX_VAT20      = 7
 	LIBFPTR_TAX_VAT120     = 8
+	LIBFPTR_TAX_VAT5       = 9
+	LIBFPTR_TAX_VAT7       = 10
+	LIBFPTR_TAX_VAT105     = 11
+	LIBFPTR_TAX_VAT107     = 12
+	LIBFPTR_TAX_INVALID    = 13
 )
 
 const (
@@ -868,28 +1084,46 @@ const (
 	LIBFPTR_DT_SCRIPTS_INFO                     = 44
 	LIBFPTR_DT_SHIFT_TOTALS                     = 45
 	LIBFPTR_DT_WIFI_INFO                        = 46
+	LIBFPTR_DT_FONT_INFO                        = 47
+	LIBFPTR_DT_SOFTLOCK_STATUS                  = 48
+	LIBFPTR_DT_LAST_SENT_ISM_NOTICE_DATE_TIME   = 49
+	LIBFPTR_DT_MCU_INFO                         = 50
+	LIBFPTR_DT_MODULE_ADDRESS                   = 51
+	LIBFPTR_DT_CACHE_REQUISITES                 = 52
+	LIBFPTR_DT_DEPARTMENT_SUM                   = 53
+	LIBFPTR_DT_MCU_TEMPERATURE                  = 54
+	LIBFPTR_DT_AVAILABLE_OPERATIONS             = 55
+	LIBFPTR_DT_PATTERN_PARAMETERS               = 56
+	LIBFPTR_DT_RECEIPT_TAPE_PATH_LENGTH         = 57
 )
 
 const (
-	LIBFPTR_FNDT_TAG_VALUE                = 0
-	LIBFPTR_FNDT_OFD_EXCHANGE_STATUS      = 1
-	LIBFPTR_FNDT_FN_INFO                  = 2
-	LIBFPTR_FNDT_LAST_REGISTRATION        = 3
-	LIBFPTR_FNDT_LAST_RECEIPT             = 4
-	LIBFPTR_FNDT_LAST_DOCUMENT            = 5
-	LIBFPTR_FNDT_SHIFT                    = 6
-	LIBFPTR_FNDT_FFD_VERSIONS             = 7
-	LIBFPTR_FNDT_VALIDITY                 = 8
-	LIBFPTR_FNDT_REG_INFO                 = 9
-	LIBFPTR_FNDT_DOCUMENTS_COUNT_IN_SHIFT = 10
-	LIBFPTR_FNDT_ERRORS                   = 11
-	LIBFPTR_FNDT_TICKET_BY_DOC_NUMBER     = 12
-	LIBFPTR_FNDT_DOCUMENT_BY_NUMBER       = 13
-	LIBFPTR_FNDT_REGISTRATION_TLV         = 14
-	LIBFPTR_FNDT_ERROR_DETAIL             = 15
-	LIBFPTR_FNDT_VALIDITY_DAYS            = 16
-	LIBFPTR_FNDT_FREE_MEMORY              = 17
-	LIBFPTR_FNDT_TOTALS                   = 18
+	LIBFPTR_FNDT_TAG_VALUE                 = 0
+	LIBFPTR_FNDT_OFD_EXCHANGE_STATUS       = 1
+	LIBFPTR_FNDT_FN_INFO                   = 2
+	LIBFPTR_FNDT_LAST_REGISTRATION         = 3
+	LIBFPTR_FNDT_LAST_RECEIPT              = 4
+	LIBFPTR_FNDT_LAST_DOCUMENT             = 5
+	LIBFPTR_FNDT_SHIFT                     = 6
+	LIBFPTR_FNDT_FFD_VERSIONS              = 7
+	LIBFPTR_FNDT_VALIDITY                  = 8
+	LIBFPTR_FNDT_REG_INFO                  = 9
+	LIBFPTR_FNDT_DOCUMENTS_COUNT_IN_SHIFT  = 10
+	LIBFPTR_FNDT_ERRORS                    = 11
+	LIBFPTR_FNDT_TICKET_BY_DOC_NUMBER      = 12
+	LIBFPTR_FNDT_DOCUMENT_BY_NUMBER        = 13
+	LIBFPTR_FNDT_REGISTRATION_TLV          = 14
+	LIBFPTR_FNDT_ERROR_DETAIL              = 15
+	LIBFPTR_FNDT_VALIDITY_DAYS             = 16
+	LIBFPTR_FNDT_FREE_MEMORY               = 17
+	LIBFPTR_FNDT_TOTALS                    = 18
+	LIBFPTR_FNDT_ISM_ERRORS                = 19
+	LIBFPTR_FNDT_ISM_EXCHANGE_STATUS       = 20
+	LIBFPTR_FNDT_MARKING_MODE_STATUS       = 21
+	LIBFPTR_FNDT_CHECK_MARK_TIME           = 22
+	LIBFPTR_FNDT_RECEIPT_SIZE              = 23
+	LIBFPTR_FNDT_NOTIFICATION_STATUS       = 24
+	LIBFPTR_FNDT_FNM_KEYS_UPDATE_DATE_TIME = 25
 )
 
 const (
@@ -930,6 +1164,8 @@ const (
 	LIBFPTR_RT_FN_SUM_COUNTERS         = 7
 	LIBFPTR_RT_FN_QUANTITY_COUNTERS    = 8
 	LIBFPTR_RT_FN_UNSENT_DOCS_COUNTERS = 9
+	LIBFPTR_RT_SETTINGS                = 10
+	LIBFPTR_RT_RUN_COMMAND             = 11
 )
 
 const (
@@ -990,8 +1226,16 @@ const (
 )
 
 const (
+	LIBFPTR_ST_NUMBER = 0
+	LIBFPTR_ST_STRING = 1
+	LIBFPTR_ST_BOOL   = 2
+)
+
+const (
 	LIBFPTR_SCRIPT_EXECUTABLE = 0
 	LIBFPTR_SCRIPT_JSON       = 1
+	LIBFPTR_SCRIPT_SETTINGS   = 2
+	LIBFPTR_SCRIPT_LIBRARY    = 3
 )
 
 const (
@@ -1013,112 +1257,341 @@ const (
 )
 
 const (
-	LIBFPTR_SETTING_LIBRARY_PATH              = "LibraryPath"
-	LIBFPTR_SETTING_MODEL                     = "Model"
-	LIBFPTR_SETTING_PORT                      = "Port"
-	LIBFPTR_SETTING_BAUDRATE                  = "BaudRate"
-	LIBFPTR_SETTING_BITS                      = "Bits"
-	LIBFPTR_SETTING_PARITY                    = "Parity"
-	LIBFPTR_SETTING_STOPBITS                  = "StopBits"
-	LIBFPTR_SETTING_IPADDRESS                 = "IPAddress"
-	LIBFPTR_SETTING_IPPORT                    = "IPPort"
-	LIBFPTR_SETTING_MACADDRESS                = "MACAddress"
-	LIBFPTR_SETTING_COM_FILE                  = "ComFile"
-	LIBFPTR_SETTING_USB_DEVICE_PATH           = "UsbDevicePath"
-	LIBFPTR_SETTING_BT_AUTOENABLE             = "AutoEnableBluetooth"
-	LIBFPTR_SETTING_BT_AUTODISABLE            = "AutoDisableBluetooth"
-	LIBFPTR_SETTING_ACCESS_PASSWORD           = "AccessPassword"
-	LIBFPTR_SETTING_USER_PASSWORD             = "UserPassword"
-	LIBFPTR_SETTING_OFD_CHANNEL               = "OfdChannel"
-	LIBFPTR_SETTING_EXISTED_COM_FILES         = "ExistedComFiles"
-	LIBFPTR_SETTING_SCRIPTS_PATH              = "ScriptsPath"
-	LIBFPTR_SETTING_DOCUMENTS_JOURNAL_PATH    = "DocumentsJournalPath"
-	LIBFPTR_SETTING_USE_DOCUMENTS_JOURNAL     = "UseDocumentsJournal"
-	LIBFPTR_SETTING_AUTO_RECONNECT            = "AutoReconnect"
-	LIBFPTR_SETTING_INVERT_CASH_DRAWER_STATUS = "InvertCashDrawerStatus"
-	LIBFPTR_MODEL_UNKNOWN                     = 0
-	LIBFPTR_MODEL_ATOL_25F                    = 57
-	LIBFPTR_MODEL_ATOL_30F                    = 61
-	LIBFPTR_MODEL_ATOL_55F                    = 62
-	LIBFPTR_MODEL_ATOL_22F                    = 63
-	LIBFPTR_MODEL_ATOL_52F                    = 64
-	LIBFPTR_MODEL_ATOL_11F                    = 67
-	LIBFPTR_MODEL_ATOL_77F                    = 69
-	LIBFPTR_MODEL_ATOL_90F                    = 72
-	LIBFPTR_MODEL_ATOL_60F                    = 75
-	LIBFPTR_MODEL_ATOL_42FS                   = 77
-	LIBFPTR_MODEL_ATOL_15F                    = 78
-	LIBFPTR_MODEL_ATOL_50F                    = 80
-	LIBFPTR_MODEL_ATOL_20F                    = 81
-	LIBFPTR_MODEL_ATOL_91F                    = 82
-	LIBFPTR_MODEL_ATOL_92F                    = 84
-	LIBFPTR_MODEL_ATOL_SIGMA_10               = 86
-	LIBFPTR_MODEL_ATOL_27F                    = 87
-	LIBFPTR_MODEL_ATOL_SIGMA_7F               = 90
-	LIBFPTR_MODEL_ATOL_SIGMA_8F               = 91
-	LIBFPTR_MODEL_ATOL_1F                     = 93
-	LIBFPTR_MODEL_KAZNACHEY_FA                = 76
-	LIBFPTR_MODEL_ATOL_AUTO                   = 500
-	LIBFPTR_PORT_BR_1200                      = 1200
-	LIBFPTR_PORT_BR_2400                      = 2400
-	LIBFPTR_PORT_BR_4800                      = 4800
-	LIBFPTR_PORT_BR_9600                      = 9600
-	LIBFPTR_PORT_BR_19200                     = 19200
-	LIBFPTR_PORT_BR_38400                     = 38400
-	LIBFPTR_PORT_BR_57600                     = 57600
-	LIBFPTR_PORT_BR_115200                    = 115200
-	LIBFPTR_PORT_BR_230400                    = 230400
-	LIBFPTR_PORT_BR_460800                    = 460800
-	LIBFPTR_PORT_BR_921600                    = 921600
-	LIBFPTR_FNS_INITIAL                       = 0
-	LIBFPTR_FNS_CONFIGURED                    = 1
-	LIBFPTR_FNS_FISCAL_MODE                   = 3
-	LIBFPTR_FNS_POSTFISCAL_MODE               = 7
-	LIBFPTR_FNS_ACCESS_ARCHIVE                = 15
-	LIBFPTR_RT_CLOSED                         = 0
-	LIBFPTR_RT_SELL                           = 1
-	LIBFPTR_RT_SELL_RETURN                    = 2
-	LIBFPTR_RT_SELL_CORRECTION                = 7
-	LIBFPTR_RT_SELL_RETURN_CORRECTION         = 8
-	LIBFPTR_RT_BUY                            = 4
-	LIBFPTR_RT_BUY_RETURN                     = 5
-	LIBFPTR_RT_BUY_CORRECTION                 = 9
-	LIBFPTR_RT_BUY_RETURN_CORRECTION          = 10
-	LIBFPTR_FFD_UNKNOWN                       = 0
-	LIBFPTR_FFD_1_0                           = 100
-	LIBFPTR_FFD_1_0_5                         = 105
-	LIBFPTR_FFD_1_1                           = 110
-	LIBFPTR_TT_DEFAULT                        = 0
-	LIBFPTR_TT_OSN                            = 1
-	LIBFPTR_TT_USN_INCOME                     = 2
-	LIBFPTR_TT_USN_INCOME_OUTCOME             = 4
-	LIBFPTR_TT_ENVD                           = 8
-	LIBFPTR_TT_ESN                            = 16
-	LIBFPTR_TT_PATENT                         = 32
-	LIBFPTR_AT_NONE                           = 0
-	LIBFPTR_AT_BANK_PAYING_AGENT              = 1
-	LIBFPTR_AT_BANK_PAYING_SUBAGENT           = 2
-	LIBFPTR_AT_PAYING_AGENT                   = 4
-	LIBFPTR_AT_PAYING_SUBAGENT                = 8
-	LIBFPTR_AT_ATTORNEY                       = 16
-	LIBFPTR_AT_COMMISSION_AGENT               = 32
-	LIBFPTR_AT_ANOTHER                        = 64
-	LIBFPTR_FN_DOC_REGISTRATION               = 1
-	LIBFPTR_FN_DOC_OPEN_SHIFT                 = 2
-	LIBFPTR_FN_DOC_RECEIPT                    = 3
-	LIBFPTR_FN_DOC_BSO                        = 4
-	LIBFPTR_FN_DOC_CLOSE_SHIFT                = 5
-	LIBFPTR_FN_DOC_CLOSE_FN                   = 6
-	LIBFPTR_FN_DOC_OPERATOR_CONFIRMATION      = 7
-	LIBFPTR_FN_DOC_REREGISTRATION             = 11
-	LIBFPTR_FN_DOC_EXCHANGE_STATUS            = 21
-	LIBFPTR_FN_DOC_CORRECTION                 = 31
-	LIBFPTR_FN_DOC_BSO_CORRECTION             = 41
-	LIBFPTR_UCF_CALC_SUMS                     = 1
-	LIBFPTR_UCF_CALC_QUANTITIES               = 2
-	LIBFPTR_UCF_CALC_SUMS_OTHERS              = 4
-	LIBFPTR_UCF_CALC_QUANTITIES_OTHERS        = 8
-	LIBFPTR_UC_OTHERS                         = 4294967295
+	LIBFPTR_MCT_OTHER    = 0
+	LIBFPTR_MCT_EGAIS_20 = 1
+	LIBFPTR_MCT_EGAIS_30 = 2
+)
+
+const (
+	LIBFPTR_MCT12_UNKNOWN     = 0
+	LIBFPTR_MCT12_SHORT       = 1
+	LIBFPTR_MCT12_88_CHECK    = 2
+	LIBFPTR_MCT12_44_NO_CHECK = 3
+	LIBFPTR_MCT12_44_CHECK    = 4
+	LIBFPTR_MCT12_4_NO_CHECK  = 5
+)
+
+const (
+	LIBFPTR_MES_PIECE_SOLD     = 1
+	LIBFPTR_MES_DRY_FOR_SALE   = 2
+	LIBFPTR_MES_PIECE_RETURN   = 3
+	LIBFPTR_MES_DRY_RETURN     = 4
+	LIBFPTR_MES_PIECE_FOR_SALE = 5
+	LIBFPTR_MES_DRY_SOLD       = 6
+)
+
+const (
+	LIBFPTR_MCS_BLOCK                = 0
+	LIBFPTR_MCS_NO_MARK_FOR_CHECK    = 1
+	LIBFPTR_MCS_MARK_RECEIVE_B1      = 2
+	LIBFPTR_MCS_MARK_STATE_QUERY_B5  = 3
+	LIBFPTR_MCS_MARK_STATE_ANSWER_B6 = 4
+)
+
+const (
+	LIBFPTR_NFM_LESS_50_PERCENT       = 0
+	LIBFPTR_NFM_FROM_50_TO_80_PERCENT = 1
+	LIBFPTR_NFM_FROM_80_TO_90_PERCENT = 2
+	LIBFPTR_NFM_MORE_90_PERCENT       = 3
+	LIBFPTR_NFM_OUT_OF_MEMORY         = 4
+)
+
+const (
+	LIBFPTR_OIS_ESTIMATED_STATUS_CORRECT   = 1
+	LIBFPTR_OIS_ESTIMATED_STATUS_INCORRECT = 2
+	LIBFPTR_OIS_SALE_STOPPED               = 3
+)
+
+const (
+	LIBFPTR_ORR_CORRECT      = 0
+	LIBFPTR_ORR_INCORRECT    = 1
+	LIBFPTR_ORR_UNRECOGNIZED = 2
+)
+
+const (
+	LIBFPTR_CER_CHECKED        = 0
+	LIBFPTR_CER_TYPE_INCORRECT = 1
+	LIBFPTR_CER_NO_KEYS        = 2
+	LIBFPTR_CER_NO_GS1         = 3
+	LIBFPTR_CER_OTHER          = 4
+)
+
+const (
+	LIBFPTR_MCS_NOT_EXECUTED       = 0
+	LIBFPTR_MCS_EXECUTED           = 1
+	LIBFPTR_MCS_IS_OVER            = 2
+	LIBFPTR_MCS_RESULT_IS_RECIEVED = 3
+)
+
+const (
+	LIBFPTR_MCT_AUTONOMOUS      = 0
+	LIBFPTR_MCT_WAIT_FOR_RESULT = 1
+	LIBFPTR_MCT_RESULT_NOT_WAIT = 2
+	LIBFPTR_MCT_QUERY_NOT_SEND  = 3
+	LIBFPTR_MCT_QUERY_NOT_FORM  = 4
+)
+
+const (
+	LIBFPTR_MCST_WAITING_FOR_TASK   = 0
+	LIBFPTR_MCST_OPENING_CONNECTION = 1
+	LIBFPTR_MCST_SENDING            = 2
+	LIBFPTR_MCST_WAITING_FOR_RESULT = 3
+	LIBFPTR_MCST_GETTING_RESULT     = 4
+	LIBFPTR_MCST_DECODE_RESULT      = 5
+	LIBFPTR_MCST_TASK_IS_OVER       = 6
+	LIBFPTR_MCST_WAITING_FOR_REPEAT = 7
+)
+
+const (
+	LIBFPTR_SILENT_REBOOT_NO                  = 0
+	LIBFPTR_SILENT_REBOOT_AFTER_SESSION_CLOSE = 1
+	LIBFPTR_SILENT_REBOOT_BEFORE_SESSION_OPEN = 2
+)
+
+const (
+	LIBFPTR_MERGE_RECEIPT_NO        = 0
+	LIBFPTR_MERGE_RECEIPT_ALL       = 1
+	LIBFPTR_MERGE_RECEIPT_MARK_ONLY = 2
+)
+
+const (
+	LIBFPTR_RPF_ELECTRONIC_AND_PRINT = 0
+	LIBFPTR_RPF_ONLY_ELECTRONIC      = 1
+	LIBFPTR_RPF_ONLY_PRINT           = 2
+)
+
+const (
+	LIBFPTR_PET_STRINGS         = 0
+	LIBFPTR_PET_PICTURES        = 1
+	LIBFPTR_PET_FISCAL_DOCUMENT = 2
+)
+
+const (
+	LIBFPTR_LIC_BASE_FISCAL = 0
+	LIBFPTR_LIC_WRITE_FW    = 1
+	LIBFPTR_LIC_TAX_20      = 2
+	LIBFPTR_LIC_FFD_1_1     = 3
+	LIBFPTR_LIC_MARK_CODE   = 4
+	LIBFPTR_LIC_EXT_FUNC    = 5
+	LIBFPTR_LIC_TEMPLATE    = 6
+	LIBFPTR_LIC_PRINT_BMP   = 7
+	LIBFPTR_LIC_DISABLE_PF  = 8
+	LIBFPTR_LIC_FFD_1_2     = 9
+	LIBFPTR_LIC_FR_WORK     = 10
+	LIBFPTR_LIC_WEB         = 11
+	LIBFPTR_LIC_FFD_1_1_2   = 12
+	LIBFPTR_LIC_TEST_LAB    = 13
+	LIBFPTR_LIC_WEB_REQ     = 14
+	LIBFPTR_LIC_RELESE      = 15
+	LIBFPTR_LIC_EXT_PRINT   = 16
+	LIBFPTR_LIC_OSU         = 17
+	LIBFPTR_LIC_EXT_FISCAL  = 18
+)
+
+const (
+	LIBFPTR_TIME_ZONE_DEVICE = 0
+	LIBFPTR_TIME_ZONE_1      = 1
+	LIBFPTR_TIME_ZONE_2      = 2
+	LIBFPTR_TIME_ZONE_3      = 3
+	LIBFPTR_TIME_ZONE_4      = 4
+	LIBFPTR_TIME_ZONE_5      = 5
+	LIBFPTR_TIME_ZONE_6      = 6
+	LIBFPTR_TIME_ZONE_7      = 7
+	LIBFPTR_TIME_ZONE_8      = 8
+	LIBFPTR_TIME_ZONE_9      = 9
+	LIBFPTR_TIME_ZONE_10     = 10
+	LIBFPTR_TIME_ZONE_11     = 11
+)
+
+const (
+	LIBFPTR_ERROR_BASE_RPC            = 600
+	LIBFPTR_ERROR_RCP_SERVER_BUSY     = 601
+	LIBFPTR_ERROR_RCP_SERVER_VERSION  = 602
+	LIBFPTR_ERROR_RCP_SERVER_EXCHANGE = 603
+)
+
+const (
+	LIBFPTR_ERROR_MARKING_END                        = 499
+	LIBFPTR_ERROR_WEB_END                            = 599
+	LIBFPTR_OFD_CHANNEL_AUTO                         = 2
+	LIBFPTR_SETTING_LIBRARY_PATH                     = "LibraryPath"
+	LIBFPTR_SETTING_MODEL                            = "Model"
+	LIBFPTR_SETTING_PORT                             = "Port"
+	LIBFPTR_SETTING_BAUDRATE                         = "BaudRate"
+	LIBFPTR_SETTING_BITS                             = "Bits"
+	LIBFPTR_SETTING_PARITY                           = "Parity"
+	LIBFPTR_SETTING_STOPBITS                         = "StopBits"
+	LIBFPTR_SETTING_IPADDRESS                        = "IPAddress"
+	LIBFPTR_SETTING_IPPORT                           = "IPPort"
+	LIBFPTR_SETTING_MACADDRESS                       = "MACAddress"
+	LIBFPTR_SETTING_COM_FILE                         = "ComFile"
+	LIBFPTR_SETTING_USB_DEVICE_PATH                  = "UsbDevicePath"
+	LIBFPTR_SETTING_BT_AUTOENABLE                    = "AutoEnableBluetooth"
+	LIBFPTR_SETTING_BT_AUTODISABLE                   = "AutoDisableBluetooth"
+	LIBFPTR_SETTING_ACCESS_PASSWORD                  = "AccessPassword"
+	LIBFPTR_SETTING_USER_PASSWORD                    = "UserPassword"
+	LIBFPTR_SETTING_OFD_CHANNEL                      = "OfdChannel"
+	LIBFPTR_SETTING_EXISTED_COM_FILES                = "ExistedComFiles"
+	LIBFPTR_SETTING_SCRIPTS_PATH                     = "ScriptsPath"
+	LIBFPTR_SETTING_DOCUMENTS_JOURNAL_PATH           = "DocumentsJournalPath"
+	LIBFPTR_SETTING_USE_DOCUMENTS_JOURNAL            = "UseDocumentsJournal"
+	LIBFPTR_SETTING_AUTO_RECONNECT                   = "AutoReconnect"
+	LIBFPTR_SETTING_INVERT_CASH_DRAWER_STATUS        = "InvertCashDrawerStatus"
+	LIBFPTR_SETTING_REMOTE_SERVER_ADDR               = "RemoteServerAddr"
+	LIBFPTR_SETTING_REMOTE_SERVER_CONNECTION_TIMEOUT = "RemoteServerConnectionTimeout"
+	LIBFPTR_SETTING_VALIDATE_MARK_WITH_FNM_ONLY      = "ValidateMarksWithFnmOnly"
+	LIBFPTR_SETTING_AUTO_MEASUREMENT_UNIT            = "AutoMeasurementUnit"
+	LIBFPTR_SETTING_SILENT_REBOOT                    = "SilentReboot"
+	LIBFPTR_SETTING_LOG_PATHS                        = "LogPaths"
+	LIBFPTR_SETTING_AUTO_TIME_SYNC                   = "AutoTimeSync"
+	LIBFPTR_SETTING_AUTO_TIME_SYNC_TIME              = "AutoTimeSyncTime"
+	LIBFPTR_SETTING_MERGE_RECEIPT_ITEMS              = "MergeReceiptItems"
+	LIBFPTR_SETTING_TIME_ZONE                        = "TimeZone"
+	LIBFPTR_SETTING_REMOTE_TIMEOUT                   = "RemoteTimeout"
+	LIBFPTR_MODEL_UNKNOWN                            = 0
+	LIBFPTR_MODEL_ATOL_25F                           = 57
+	LIBFPTR_MODEL_ATOL_30F                           = 61
+	LIBFPTR_MODEL_ATOL_55F                           = 62
+	LIBFPTR_MODEL_ATOL_22F                           = 63
+	LIBFPTR_MODEL_ATOL_52F                           = 64
+	LIBFPTR_MODEL_ATOL_11F                           = 67
+	LIBFPTR_MODEL_ATOL_77F                           = 69
+	LIBFPTR_MODEL_ATOL_90F                           = 72
+	LIBFPTR_MODEL_ATOL_60F                           = 75
+	LIBFPTR_MODEL_ATOL_42FS                          = 77
+	LIBFPTR_MODEL_ATOL_15F                           = 78
+	LIBFPTR_MODEL_ATOL_50F                           = 80
+	LIBFPTR_MODEL_ATOL_20F                           = 81
+	LIBFPTR_MODEL_ATOL_91F                           = 82
+	LIBFPTR_MODEL_ATOL_92F                           = 84
+	LIBFPTR_MODEL_ATOL_SIGMA_10                      = 86
+	LIBFPTR_MODEL_ATOL_27F                           = 87
+	LIBFPTR_MODEL_ATOL_SIGMA_7F                      = 90
+	LIBFPTR_MODEL_ATOL_SIGMA_8F                      = 91
+	LIBFPTR_MODEL_ATOL_1F                            = 93
+	LIBFPTR_MODEL_KAZNACHEY_FA                       = 76
+	LIBFPTR_MODEL_ATOL_22V2F                         = 95
+	LIBFPTR_MODEL_ATOL_AUTO                          = 500
+	LIBFPTR_MODEL_ATOL_47FA                          = 48
+	LIBFPTR_MODEL_ATOL_PT_5F                         = 89
+	LIBFPTR_MODEL_ATOL_27_FP7_F                      = 99
+	LIBFPTR_MODEL_ATOL_42FA                          = 70
+	LIBFPTR_MODEL_ALLIANCE_20F                       = 50
+	LIBFPTR_MODEL_ATOL_55V2F                         = 66
+	LIBFPTR_MODEL_ATOL_STB_6F                        = 92
+	LIBFPTR_MODEL_ATOL_35F                           = 97
+	LIBFPTR_MODEL_ATOL_2F                            = 96
+	LIBFPTR_PORT_BR_1200                             = 1200
+	LIBFPTR_PORT_BR_2400                             = 2400
+	LIBFPTR_PORT_BR_4800                             = 4800
+	LIBFPTR_PORT_BR_9600                             = 9600
+	LIBFPTR_PORT_BR_19200                            = 19200
+	LIBFPTR_PORT_BR_38400                            = 38400
+	LIBFPTR_PORT_BR_57600                            = 57600
+	LIBFPTR_PORT_BR_115200                           = 115200
+	LIBFPTR_PORT_BR_230400                           = 230400
+	LIBFPTR_PORT_BR_460800                           = 460800
+	LIBFPTR_PORT_BR_921600                           = 921600
+	LIBFPTR_FNS_INITIAL                              = 0
+	LIBFPTR_FNS_CONFIGURED                           = 1
+	LIBFPTR_FNS_FISCAL_MODE                          = 3
+	LIBFPTR_FNS_POSTFISCAL_MODE                      = 7
+	LIBFPTR_FNS_ACCESS_ARCHIVE                       = 15
+	LIBFPTR_RT_CLOSED                                = 0
+	LIBFPTR_RT_SELL                                  = 1
+	LIBFPTR_RT_SELL_RETURN                           = 2
+	LIBFPTR_RT_SELL_CORRECTION                       = 7
+	LIBFPTR_RT_SELL_RETURN_CORRECTION                = 8
+	LIBFPTR_RT_BUY                                   = 4
+	LIBFPTR_RT_BUY_RETURN                            = 5
+	LIBFPTR_RT_BUY_CORRECTION                        = 9
+	LIBFPTR_RT_BUY_RETURN_CORRECTION                 = 10
+	LIBFPTR_FFD_UNKNOWN                              = 0
+	LIBFPTR_FFD_1_0                                  = 100
+	LIBFPTR_FFD_1_0_5                                = 105
+	LIBFPTR_FFD_1_1                                  = 110
+	LIBFPTR_FFD_1_2                                  = 120
+	LIBFPTR_TT_DEFAULT                               = 0
+	LIBFPTR_TT_OSN                                   = 1
+	LIBFPTR_TT_USN_INCOME                            = 2
+	LIBFPTR_TT_USN_INCOME_OUTCOME                    = 4
+	LIBFPTR_TT_ENVD                                  = 8
+	LIBFPTR_TT_ESN                                   = 16
+	LIBFPTR_TT_PATENT                                = 32
+	LIBFPTR_AT_NONE                                  = 0
+	LIBFPTR_AT_BANK_PAYING_AGENT                     = 1
+	LIBFPTR_AT_BANK_PAYING_SUBAGENT                  = 2
+	LIBFPTR_AT_PAYING_AGENT                          = 4
+	LIBFPTR_AT_PAYING_SUBAGENT                       = 8
+	LIBFPTR_AT_ATTORNEY                              = 16
+	LIBFPTR_AT_COMMISSION_AGENT                      = 32
+	LIBFPTR_AT_ANOTHER                               = 64
+	LIBFPTR_DT_CLOSED                                = 0
+	LIBFPTR_DT_RECEIPT_SELL                          = 1
+	LIBFPTR_DT_RECEIPT_SELL_RETURN                   = 2
+	LIBFPTR_DT_RECEIPT_BUY                           = 3
+	LIBFPTR_DT_RECEIPT_BUY_RETURN                    = 4
+	LIBFPTR_DT_OPEN_SHIFT                            = 5
+	LIBFPTR_DT_CLOSE_SHIFT                           = 6
+	LIBFPTR_DT_REGISTRATION                          = 7
+	LIBFPTR_DT_CLOSE_ARCHIVE                         = 8
+	LIBFPTR_DT_OFD_EXCHANGE_STATUS                   = 11
+	LIBFPTR_DT_RECEIPT_SELL_CORRECTION               = 12
+	LIBFPTR_DT_RECEIPT_SELL_RETURN_CORRECTION        = 13
+	LIBFPTR_DT_RECEIPT_BUY_CORRECTION                = 14
+	LIBFPTR_DT_RECEIPT_BUY_RETURN_CORRECTION         = 15
+	LIBFPTR_DT_DOCUMENT_SERVICE                      = 20
+	LIBFPTR_DT_DOCUMENT_COPY                         = 21
+	LIBFPTR_FN_DOC_REGISTRATION                      = 1
+	LIBFPTR_FN_DOC_OPEN_SHIFT                        = 2
+	LIBFPTR_FN_DOC_RECEIPT                           = 3
+	LIBFPTR_FN_DOC_BSO                               = 4
+	LIBFPTR_FN_DOC_CLOSE_SHIFT                       = 5
+	LIBFPTR_FN_DOC_CLOSE_FN                          = 6
+	LIBFPTR_FN_DOC_OPERATOR_CONFIRMATION             = 7
+	LIBFPTR_FN_DOC_REREGISTRATION                    = 11
+	LIBFPTR_FN_DOC_EXCHANGE_STATUS                   = 21
+	LIBFPTR_FN_DOC_CORRECTION                        = 31
+	LIBFPTR_FN_DOC_BSO_CORRECTION                    = 41
+	LIBFPTR_FWT_FIRMWARE                             = 0
+	LIBFPTR_FWT_SCRIPTS                              = 2
+	LIBFPTR_UCF_CALC_SUMS                            = 1
+	LIBFPTR_UCF_CALC_QUANTITIES                      = 2
+	LIBFPTR_UCF_CALC_SUMS_OTHERS                     = 4
+	LIBFPTR_UCF_CALC_QUANTITIES_OTHERS               = 8
+	LIBFPTR_UC_OTHERS                                = 4294967295
+	LIBFPTR_MCT12_AUTO                               = 256
+	LIBFPTR_MES_UNCHANGED                            = 255
+	LIBFPTR_IU_PIECE                                 = 0
+	LIBFPTR_IU_GRAM                                  = 10
+	LIBFPTR_IU_KILOGRAM                              = 11
+	LIBFPTR_IU_TON                                   = 12
+	LIBFPTR_IU_CENTIMETER                            = 20
+	LIBFPTR_IU_DECIMETER                             = 21
+	LIBFPTR_IU_METER                                 = 22
+	LIBFPTR_IU_SQUARE_CENTIMETER                     = 30
+	LIBFPTR_IU_SQUARE_DECIMETER                      = 31
+	LIBFPTR_IU_SQUARE_METER                          = 32
+	LIBFPTR_IU_MILLILITER                            = 40
+	LIBFPTR_IU_LITER                                 = 41
+	LIBFPTR_IU_CUBIC_METER                           = 42
+	LIBFPTR_IU_KILOWATT_HOUR                         = 50
+	LIBFPTR_IU_GKAL                                  = 51
+	LIBFPTR_IU_DAY                                   = 70
+	LIBFPTR_IU_HOUR                                  = 71
+	LIBFPTR_IU_MINUTE                                = 72
+	LIBFPTR_IU_SECOND                                = 73
+	LIBFPTR_IU_KILOBYTE                              = 80
+	LIBFPTR_IU_MEGABYTE                              = 81
+	LIBFPTR_IU_GIGABYTE                              = 82
+	LIBFPTR_IU_TERABYTE                              = 83
+	LIBFPTR_IU_OTHER                                 = 255
+	LIBFPTR_ERROR_USERS_SCRIPTS_BASE                 = 1000
+	LIBFPTR_PLATFORM_UNKNOWN                         = 0
+	LIBFPTR_PLATFORM_25                              = 25
+	LIBFPTR_PLATFORM_50                              = 50
+	LIBFPTR_ERROR_USERS_SCRIPTS_END                  = 1999
+	LIBFPTR_ERROR_RPC_END                            = 699
 )
 
 type IFptr struct {
@@ -1128,6 +1601,7 @@ type IFptr struct {
 
 type functionPointers struct {
 	libfptr_create                            C.libfptr_create_func
+	libfptr_create_with_id                    C.libfptr_create_with_id_func
 	libfptr_destroy                           C.libfptr_destroy_func
 	libfptr_get_version_string                C.libfptr_get_version_string_func
 	libfptr_set_settings                      C.libfptr_set_settings_func
@@ -1137,6 +1611,7 @@ type functionPointers struct {
 	libfptr_is_opened                         C.libfptr_is_opened_func
 	libfptr_error_code                        C.libfptr_error_code_func
 	libfptr_error_description                 C.libfptr_error_description_func
+	libfptr_error_recommendation              C.libfptr_error_recommendation_func
 	libfptr_reset_error                       C.libfptr_reset_error_func
 	libfptr_set_param_bool                    C.libfptr_set_param_bool_func
 	libfptr_set_param_int                     C.libfptr_set_param_int_func
@@ -1156,7 +1631,9 @@ type functionPointers struct {
 	libfptr_get_param_str                     C.libfptr_get_param_str_func
 	libfptr_get_param_bytearray               C.libfptr_get_param_bytearray_func
 	libfptr_get_param_datetime                C.libfptr_get_param_datetime_func
+	libfptr_is_param_available                C.libfptr_is_param_available_func
 	libfptr_log_write                         C.libfptr_log_write_func
+	libfptr_change_label                      C.libfptr_change_label_func
 	libfptr_show_properties                   C.libfptr_show_properties_func
 	libfptr_set_user_param_bool               C.libfptr_set_param_bool_func
 	libfptr_set_user_param_int                C.libfptr_set_param_int_func
@@ -1165,112 +1642,132 @@ type functionPointers struct {
 	libfptr_set_user_param_bytearray          C.libfptr_set_param_bytearray_func
 	libfptr_set_user_param_datetime           C.libfptr_set_param_datetime_func
 
-	libfptr_apply_single_settings             C.libfptr_simple_call_func
-	libfptr_open                              C.libfptr_simple_call_func
-	libfptr_close                             C.libfptr_simple_call_func
-	libfptr_reset_params                      C.libfptr_simple_call_func
-	libfptr_run_command                       C.libfptr_simple_call_func
-	libfptr_beep                              C.libfptr_simple_call_func
-	libfptr_open_drawer                       C.libfptr_simple_call_func
-	libfptr_cut                               C.libfptr_simple_call_func
-	libfptr_device_poweroff                   C.libfptr_simple_call_func
-	libfptr_device_reboot                     C.libfptr_simple_call_func
-	libfptr_open_shift                        C.libfptr_simple_call_func
-	libfptr_reset_summary                     C.libfptr_simple_call_func
-	libfptr_init_device                       C.libfptr_simple_call_func
-	libfptr_query_data                        C.libfptr_simple_call_func
-	libfptr_cash_income                       C.libfptr_simple_call_func
-	libfptr_cash_outcome                      C.libfptr_simple_call_func
-	libfptr_open_receipt                      C.libfptr_simple_call_func
-	libfptr_cancel_receipt                    C.libfptr_simple_call_func
-	libfptr_close_receipt                     C.libfptr_simple_call_func
-	libfptr_check_document_closed             C.libfptr_simple_call_func
-	libfptr_receipt_total                     C.libfptr_simple_call_func
-	libfptr_receipt_tax                       C.libfptr_simple_call_func
-	libfptr_registration                      C.libfptr_simple_call_func
-	libfptr_payment                           C.libfptr_simple_call_func
-	libfptr_report                            C.libfptr_simple_call_func
-	libfptr_print_text                        C.libfptr_simple_call_func
-	libfptr_print_cliche                      C.libfptr_simple_call_func
-	libfptr_begin_nonfiscal_document          C.libfptr_simple_call_func
-	libfptr_end_nonfiscal_document            C.libfptr_simple_call_func
-	libfptr_print_barcode                     C.libfptr_simple_call_func
-	libfptr_print_picture                     C.libfptr_simple_call_func
-	libfptr_print_picture_by_number           C.libfptr_simple_call_func
-	libfptr_upload_picture_from_file          C.libfptr_simple_call_func
-	libfptr_clear_pictures                    C.libfptr_simple_call_func
-	libfptr_write_device_setting_raw          C.libfptr_simple_call_func
-	libfptr_read_device_setting_raw           C.libfptr_simple_call_func
-	libfptr_commit_settings                   C.libfptr_simple_call_func
-	libfptr_init_settings                     C.libfptr_simple_call_func
-	libfptr_reset_settings                    C.libfptr_simple_call_func
-	libfptr_write_date_time                   C.libfptr_simple_call_func
-	libfptr_write_license                     C.libfptr_simple_call_func
-	libfptr_fn_operation                      C.libfptr_simple_call_func
-	libfptr_fn_query_data                     C.libfptr_simple_call_func
-	libfptr_fn_write_attributes               C.libfptr_simple_call_func
-	libfptr_external_device_power_on          C.libfptr_simple_call_func
-	libfptr_external_device_power_off         C.libfptr_simple_call_func
-	libfptr_external_device_write_data        C.libfptr_simple_call_func
-	libfptr_external_device_read_data         C.libfptr_simple_call_func
-	libfptr_operator_login                    C.libfptr_simple_call_func
-	libfptr_process_json                      C.libfptr_simple_call_func
-	libfptr_read_device_setting               C.libfptr_simple_call_func
-	libfptr_write_device_setting              C.libfptr_simple_call_func
-	libfptr_begin_read_records                C.libfptr_simple_call_func
-	libfptr_read_next_record                  C.libfptr_simple_call_func
-	libfptr_end_read_records                  C.libfptr_simple_call_func
-	libfptr_user_memory_operation             C.libfptr_simple_call_func
-	libfptr_continue_print                    C.libfptr_simple_call_func
-	libfptr_init_mgm                          C.libfptr_simple_call_func
-	libfptr_util_form_tlv                     C.libfptr_simple_call_func
-	libfptr_util_form_nomenclature            C.libfptr_simple_call_func
-	libfptr_util_mapping                      C.libfptr_simple_call_func
-	libfptr_read_model_flags                  C.libfptr_simple_call_func
-	libfptr_line_feed                         C.libfptr_simple_call_func
-	libfptr_flash_firmware                    C.libfptr_simple_call_func
-	libfptr_soft_lock_init                    C.libfptr_simple_call_func
-	libfptr_soft_lock_query_session_code      C.libfptr_simple_call_func
-	libfptr_soft_lock_validate                C.libfptr_simple_call_func
-	libfptr_util_calc_tax                     C.libfptr_simple_call_func
-	libfptr_download_picture                  C.libfptr_simple_call_func
-	libfptr_bluetooth_remove_paired_devices   C.libfptr_simple_call_func
-	libfptr_util_tag_info                     C.libfptr_simple_call_func
-	libfptr_util_container_versions           C.libfptr_simple_call_func
-	libfptr_activate_licenses                 C.libfptr_simple_call_func
-	libfptr_remove_licenses                   C.libfptr_simple_call_func
-	libfptr_enter_keys                        C.libfptr_simple_call_func
-	libfptr_validate_keys                     C.libfptr_simple_call_func
-	libfptr_enter_serial_number               C.libfptr_simple_call_func
-	libfptr_get_serial_number_request         C.libfptr_simple_call_func
-	libfptr_upload_pixel_buffer               C.libfptr_simple_call_func
-	libfptr_download_pixel_buffer             C.libfptr_simple_call_func
-	libfptr_print_pixel_buffer                C.libfptr_simple_call_func
-	libfptr_util_convert_tag_value            C.libfptr_simple_call_func
-	libfptr_parse_marking_code                C.libfptr_simple_call_func
-	libfptr_call_script                       C.libfptr_simple_call_func
-	libfptr_set_header_lines                  C.libfptr_simple_call_func
-	libfptr_set_footer_lines                  C.libfptr_simple_call_func
-	libfptr_upload_picture_cliche             C.libfptr_simple_call_func
-	libfptr_upload_picture_memory             C.libfptr_simple_call_func
-	libfptr_upload_pixel_buffer_cliche        C.libfptr_simple_call_func
-	libfptr_upload_pixel_buffer_memory        C.libfptr_simple_call_func
-	libfptr_exec_driver_script                C.libfptr_simple_call_func
-	libfptr_upload_driver_script              C.libfptr_simple_call_func
-	libfptr_exec_driver_script_by_id          C.libfptr_simple_call_func
-	libfptr_write_universal_counters_settings C.libfptr_simple_call_func
-	libfptr_read_universal_counters_settings  C.libfptr_simple_call_func
-	libfptr_query_universal_counters_state    C.libfptr_simple_call_func
-	libfptr_reset_universal_counters          C.libfptr_simple_call_func
-	libfptr_cache_universal_counters          C.libfptr_simple_call_func
-	libfptr_read_universal_counter_sum        C.libfptr_simple_call_func
-	libfptr_read_universal_counter_quantity   C.libfptr_simple_call_func
-	libfptr_clear_universal_counters_cache    C.libfptr_simple_call_func
+	libfptr_apply_single_settings                C.libfptr_simple_call_func
+	libfptr_open                                 C.libfptr_simple_call_func
+	libfptr_close                                C.libfptr_simple_call_func
+	libfptr_reset_params                         C.libfptr_simple_call_func
+	libfptr_run_command                          C.libfptr_simple_call_func
+	libfptr_beep                                 C.libfptr_simple_call_func
+	libfptr_open_drawer                          C.libfptr_simple_call_func
+	libfptr_cut                                  C.libfptr_simple_call_func
+	libfptr_device_poweroff                      C.libfptr_simple_call_func
+	libfptr_device_reboot                        C.libfptr_simple_call_func
+	libfptr_open_shift                           C.libfptr_simple_call_func
+	libfptr_reset_summary                        C.libfptr_simple_call_func
+	libfptr_init_device                          C.libfptr_simple_call_func
+	libfptr_query_data                           C.libfptr_simple_call_func
+	libfptr_cash_income                          C.libfptr_simple_call_func
+	libfptr_cash_outcome                         C.libfptr_simple_call_func
+	libfptr_open_receipt                         C.libfptr_simple_call_func
+	libfptr_cancel_receipt                       C.libfptr_simple_call_func
+	libfptr_close_receipt                        C.libfptr_simple_call_func
+	libfptr_check_document_closed                C.libfptr_simple_call_func
+	libfptr_receipt_total                        C.libfptr_simple_call_func
+	libfptr_receipt_tax                          C.libfptr_simple_call_func
+	libfptr_registration                         C.libfptr_simple_call_func
+	libfptr_payment                              C.libfptr_simple_call_func
+	libfptr_report                               C.libfptr_simple_call_func
+	libfptr_print_text                           C.libfptr_simple_call_func
+	libfptr_print_cliche                         C.libfptr_simple_call_func
+	libfptr_begin_nonfiscal_document             C.libfptr_simple_call_func
+	libfptr_end_nonfiscal_document               C.libfptr_simple_call_func
+	libfptr_print_barcode                        C.libfptr_simple_call_func
+	libfptr_print_picture                        C.libfptr_simple_call_func
+	libfptr_print_picture_by_number              C.libfptr_simple_call_func
+	libfptr_upload_picture_from_file             C.libfptr_simple_call_func
+	libfptr_clear_pictures                       C.libfptr_simple_call_func
+	libfptr_write_device_setting_raw             C.libfptr_simple_call_func
+	libfptr_read_device_setting_raw              C.libfptr_simple_call_func
+	libfptr_commit_settings                      C.libfptr_simple_call_func
+	libfptr_init_settings                        C.libfptr_simple_call_func
+	libfptr_reset_settings                       C.libfptr_simple_call_func
+	libfptr_write_date_time                      C.libfptr_simple_call_func
+	libfptr_write_license                        C.libfptr_simple_call_func
+	libfptr_fn_operation                         C.libfptr_simple_call_func
+	libfptr_fn_query_data                        C.libfptr_simple_call_func
+	libfptr_fn_write_attributes                  C.libfptr_simple_call_func
+	libfptr_external_device_power_on             C.libfptr_simple_call_func
+	libfptr_external_device_power_off            C.libfptr_simple_call_func
+	libfptr_external_device_write_data           C.libfptr_simple_call_func
+	libfptr_external_device_read_data            C.libfptr_simple_call_func
+	libfptr_operator_login                       C.libfptr_simple_call_func
+	libfptr_process_json                         C.libfptr_simple_call_func
+	libfptr_read_device_setting                  C.libfptr_simple_call_func
+	libfptr_write_device_setting                 C.libfptr_simple_call_func
+	libfptr_begin_read_records                   C.libfptr_simple_call_func
+	libfptr_read_next_record                     C.libfptr_simple_call_func
+	libfptr_end_read_records                     C.libfptr_simple_call_func
+	libfptr_user_memory_operation                C.libfptr_simple_call_func
+	libfptr_continue_print                       C.libfptr_simple_call_func
+	libfptr_init_mgm                             C.libfptr_simple_call_func
+	libfptr_util_form_tlv                        C.libfptr_simple_call_func
+	libfptr_util_form_nomenclature               C.libfptr_simple_call_func
+	libfptr_util_mapping                         C.libfptr_simple_call_func
+	libfptr_read_model_flags                     C.libfptr_simple_call_func
+	libfptr_line_feed                            C.libfptr_simple_call_func
+	libfptr_flash_firmware                       C.libfptr_simple_call_func
+	libfptr_soft_lock_init                       C.libfptr_simple_call_func
+	libfptr_soft_lock_query_session_code         C.libfptr_simple_call_func
+	libfptr_soft_lock_validate                   C.libfptr_simple_call_func
+	libfptr_util_calc_tax                        C.libfptr_simple_call_func
+	libfptr_download_picture                     C.libfptr_simple_call_func
+	libfptr_bluetooth_remove_paired_devices      C.libfptr_simple_call_func
+	libfptr_util_tag_info                        C.libfptr_simple_call_func
+	libfptr_util_container_versions              C.libfptr_simple_call_func
+	libfptr_activate_licenses                    C.libfptr_simple_call_func
+	libfptr_remove_licenses                      C.libfptr_simple_call_func
+	libfptr_enter_keys                           C.libfptr_simple_call_func
+	libfptr_validate_keys                        C.libfptr_simple_call_func
+	libfptr_enter_serial_number                  C.libfptr_simple_call_func
+	libfptr_get_serial_number_request            C.libfptr_simple_call_func
+	libfptr_upload_pixel_buffer                  C.libfptr_simple_call_func
+	libfptr_download_pixel_buffer                C.libfptr_simple_call_func
+	libfptr_print_pixel_buffer                   C.libfptr_simple_call_func
+	libfptr_util_convert_tag_value               C.libfptr_simple_call_func
+	libfptr_parse_marking_code                   C.libfptr_simple_call_func
+	libfptr_call_script                          C.libfptr_simple_call_func
+	libfptr_set_header_lines                     C.libfptr_simple_call_func
+	libfptr_set_footer_lines                     C.libfptr_simple_call_func
+	libfptr_upload_picture_cliche                C.libfptr_simple_call_func
+	libfptr_upload_picture_memory                C.libfptr_simple_call_func
+	libfptr_upload_pixel_buffer_cliche           C.libfptr_simple_call_func
+	libfptr_upload_pixel_buffer_memory           C.libfptr_simple_call_func
+	libfptr_exec_driver_script                   C.libfptr_simple_call_func
+	libfptr_upload_driver_script                 C.libfptr_simple_call_func
+	libfptr_exec_driver_script_by_id             C.libfptr_simple_call_func
+	libfptr_write_universal_counters_settings    C.libfptr_simple_call_func
+	libfptr_read_universal_counters_settings     C.libfptr_simple_call_func
+	libfptr_query_universal_counters_state       C.libfptr_simple_call_func
+	libfptr_reset_universal_counters             C.libfptr_simple_call_func
+	libfptr_cache_universal_counters             C.libfptr_simple_call_func
+	libfptr_read_universal_counter_sum           C.libfptr_simple_call_func
+	libfptr_read_universal_counter_quantity      C.libfptr_simple_call_func
+	libfptr_clear_universal_counters_cache       C.libfptr_simple_call_func
+	libfptr_disable_ofd_channel                  C.libfptr_simple_call_func
+	libfptr_enable_ofd_channel                   C.libfptr_simple_call_func
+	libfptr_validate_json                        C.libfptr_simple_call_func
+	libfptr_reflection_call                      C.libfptr_simple_call_func
+	libfptr_get_remote_server_info               C.libfptr_simple_call_func
+	libfptr_begin_marking_code_validation        C.libfptr_simple_call_func
+	libfptr_cancel_marking_code_validation       C.libfptr_simple_call_func
+	libfptr_get_marking_code_validation_status   C.libfptr_simple_call_func
+	libfptr_accept_marking_code                  C.libfptr_simple_call_func
+	libfptr_decline_marking_code                 C.libfptr_simple_call_func
+	libfptr_update_fnm_keys                      C.libfptr_simple_call_func
+	libfptr_write_sales_notice                   C.libfptr_simple_call_func
+	libfptr_check_marking_code_validations_ready C.libfptr_simple_call_func
+	libfptr_clear_marking_code_validation_result C.libfptr_simple_call_func
+	libfptr_ping_marking_server                  C.libfptr_simple_call_func
+	libfptr_get_marking_server_status            C.libfptr_simple_call_func
+	libfptr_is_driver_locked                     C.libfptr_simple_call_func
+	libfptr_get_last_document_journal            C.libfptr_simple_call_func
+	libfptr_find_document_in_journal             C.libfptr_simple_call_func
+	libfptr_run_fn_command                       C.libfptr_simple_call_func
 }
 
 func New() *IFptr {
 	fptr := IFptr{}
-	if err := fptr.create(); err != nil {
+	if err := fptr.create(""); err != nil {
 		return nil
 	}
 	return &fptr
@@ -1278,20 +1775,77 @@ func New() *IFptr {
 
 func NewSafe() (*IFptr, error) {
 	fptr := IFptr{}
-	if err := fptr.create(); err != nil {
+	if err := fptr.create(""); err != nil {
 		return nil, err
 	}
 	return &fptr, nil
 }
 
-func (fptr *IFptr) create() (err error) {
-	fmt.Println("loading a library to communicate with the printer")
-	functions, err := loadLibrary()
+func NewWithPath(path string) (*IFptr, error) {
+	fptr := IFptr{}
+	if err := fptr.create(path); err != nil {
+		return nil, err
+	}
+	return &fptr, nil
+}
+
+func NewWithID(id string) (*IFptr, error) {
+	fptr := IFptr{}
+	if err := fptr.createWithID(id, ""); err != nil {
+		return nil, err
+	}
+	return &fptr, nil
+}
+
+func NewWithIDAndPath(id string, path string) (*IFptr, error) {
+	fptr := IFptr{}
+	if err := fptr.createWithID(id, path); err != nil {
+		return nil, err
+	}
+	return &fptr, nil
+}
+
+func (fptr *IFptr) create(path string) (err error) {
+	functions, err := loadLibrary(path)
 	if err != nil {
-		return err
+		return
 	}
 	fptr.nativePointer = C.libfptr_handle(nil)
-	C.bridge_libfptr_create_func(functions.libfptr_create, &fptr.nativePointer)
+
+	r := C.bridge_libfptr_create_func(functions.libfptr_create, &fptr.nativePointer)
+	switch r {
+	case 0:
+	case -2:
+		err = errors.New("Invalid [id] format")
+		return
+	default:
+		err = errors.New("Can`t create driver handle")
+		return
+	}
+
+	fptr.functions = functions
+	return nil
+}
+
+func (fptr *IFptr) createWithID(id string, path string) (err error) {
+	functions, err := loadLibrary(path)
+	if err != nil {
+		return
+	}
+	fptr.nativePointer = C.libfptr_handle(nil)
+	strID, _ := StringToWcharT(id)
+
+	r := C.bridge_libfptr_create_with_id_func(functions.libfptr_create_with_id, &fptr.nativePointer, strID)
+	switch r {
+	case 0:
+	case -2:
+		err = errors.New("Invalid [id] format")
+		return
+	default:
+		err = errors.New("Can`t create driver handle")
+		return
+	}
+
 	fptr.functions = functions
 	return nil
 }
@@ -1302,6 +1856,10 @@ func (fptr *IFptr) Destroy() {
 
 func (fptr *IFptr) Version() string {
 	return C.GoString(C.bridge_libfptr_get_version_string_func(fptr.functions.libfptr_get_version_string, fptr.nativePointer))
+}
+
+func (fptr *IFptr) WrapperVersion() string {
+	return "10.10.7.0"
 }
 
 func (fptr *IFptr) SetSettings(settings string) error {
@@ -1335,7 +1893,7 @@ func (fptr *IFptr) GetSingleSetting(key string) string {
 	buf := make([]C.wchar_t, 128)
 	size := int(C.bridge_libfptr_get_single_setting_func(fptr.functions.libfptr_get_single_setting, fptr.nativePointer, wideKey, &buf[0], C.int(len(buf))))
 	if size > len(buf) {
-		buf := make([]C.wchar_t, size)
+		buf = make([]C.wchar_t, size)
 		C.bridge_libfptr_get_single_setting_func(fptr.functions.libfptr_get_single_setting, fptr.nativePointer, wideKey, &buf[0], C.int(len(buf)))
 	}
 	str, _ := WcharTToString(&buf[0])
@@ -1359,8 +1917,20 @@ func (fptr *IFptr) ErrorDescription() string {
 	buf := make([]C.wchar_t, 128)
 	size := int(C.bridge_libfptr_error_description_func(fptr.functions.libfptr_error_description, fptr.nativePointer, &buf[0], C.int(len(buf))))
 	if size > len(buf) {
-		buf := make([]C.wchar_t, size)
+		buf = make([]C.wchar_t, size)
 		C.bridge_libfptr_error_description_func(fptr.functions.libfptr_error_description, fptr.nativePointer, &buf[0], C.int(len(buf)))
+	}
+	str, _ := WcharTToString(&buf[0])
+
+	return str
+}
+
+func (fptr *IFptr) ErrorRecommendation() string {
+	buf := make([]C.wchar_t, 128)
+	size := int(C.bridge_libfptr_error_recommendation_func(fptr.functions.libfptr_error_recommendation, fptr.nativePointer, &buf[0], C.int(len(buf))))
+	if size > len(buf) {
+		buf = make([]C.wchar_t, size)
+		C.bridge_libfptr_error_recommendation_func(fptr.functions.libfptr_error_recommendation, fptr.nativePointer, &buf[0], C.int(len(buf)))
 	}
 	str, _ := WcharTToString(&buf[0])
 
@@ -1375,22 +1945,44 @@ func (fptr *IFptr) SetParam(paramId int32, param interface{}) {
 	switch p := param.(type) {
 	case int:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				if uint(p) > math.MaxUint32 {
+					panic(fmt.Sprintf("Invalid parameter value %v", p))
+				}
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int8:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int16:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int32:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case uint:
 		{
+			if uint(p) > math.MaxUint32 {
+				panic(fmt.Sprintf("Invalid parameter value %v", p))
+			}
 			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
 		}
 	case uint8:
@@ -1449,6 +2041,10 @@ func (fptr *IFptr) SetParam(paramId int32, param interface{}) {
 			C.bridge_libfptr_set_param_bytearray_func(fptr.functions.libfptr_set_param_bytearray, fptr.nativePointer, C.int(paramId),
 				(*C.uchar)(&bytesParam[0]), C.int(len(bytesParam)))
 		}
+	default:
+		{
+			panic(fmt.Sprintf("Invalid parameter type %T", p))
+		}
 	}
 }
 
@@ -1456,22 +2052,44 @@ func (fptr *IFptr) SetUserParam(paramId int32, param interface{}) {
 	switch p := param.(type) {
 	case int:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_user_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				if uint(p) > math.MaxUint32 {
+					panic(fmt.Sprintf("Invalid parameter value %v", p))
+				}
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int8:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_user_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int16:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_user_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int32:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_user_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case uint:
 		{
+			if uint(p) > math.MaxUint32 {
+				panic(fmt.Sprintf("Invalid parameter value %v", p))
+			}
 			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_user_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
 		}
 	case uint8:
@@ -1530,6 +2148,10 @@ func (fptr *IFptr) SetUserParam(paramId int32, param interface{}) {
 			C.bridge_libfptr_set_param_bytearray_func(fptr.functions.libfptr_set_user_param_bytearray, fptr.nativePointer, C.int(paramId),
 				(*C.uchar)(&bytesParam[0]), C.int(len(bytesParam)))
 		}
+	default:
+		{
+			panic(fmt.Sprintf("Invalid parameter type %T", p))
+		}
 	}
 }
 
@@ -1537,22 +2159,44 @@ func (fptr *IFptr) SetNonPrintableParam(paramId int32, param interface{}) {
 	switch p := param.(type) {
 	case int:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_non_printable_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				if uint(p) > math.MaxUint32 {
+					panic(fmt.Sprintf("Invalid parameter value %v", p))
+				}
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int8:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_non_printable_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int16:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_non_printable_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case int32:
 		{
-			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			if p < 0 {
+				C.bridge_libfptr_set_param_double_func(fptr.functions.libfptr_set_non_printable_param_double, fptr.nativePointer, C.int(paramId), C.double(p))
+			} else {
+				C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
+			}
 		}
 	case uint:
 		{
+			if uint(p) > math.MaxUint32 {
+				panic(fmt.Sprintf("Invalid parameter value %v", p))
+			}
 			C.bridge_libfptr_set_param_int_func(fptr.functions.libfptr_set_non_printable_param_int, fptr.nativePointer, C.int(paramId), C.uint(p))
 		}
 	case uint8:
@@ -1611,6 +2255,10 @@ func (fptr *IFptr) SetNonPrintableParam(paramId int32, param interface{}) {
 			C.bridge_libfptr_set_param_bytearray_func(fptr.functions.libfptr_set_non_printable_param_bytearray, fptr.nativePointer, C.int(paramId),
 				(*C.uchar)(&bytesParam[0]), C.int(len(bytesParam)))
 		}
+	default:
+		{
+			panic(fmt.Sprintf("Invalid parameter type %T", p))
+		}
 	}
 }
 
@@ -1635,7 +2283,7 @@ func (fptr *IFptr) GetParamString(paramId int) string {
 	buf := make([]C.wchar_t, 128)
 	size := int(C.bridge_libfptr_get_param_str_func(fptr.functions.libfptr_get_param_str, fptr.nativePointer, C.int(paramId), &buf[0], C.int(len(buf))))
 	if size > len(buf) {
-		buf := make([]C.wchar_t, size)
+		buf = make([]C.wchar_t, size)
 		C.bridge_libfptr_get_param_str_func(fptr.functions.libfptr_get_param_str, fptr.nativePointer, C.int(paramId), &buf[0], C.int(len(buf)))
 	}
 	str, _ := WcharTToString(&buf[0])
@@ -1659,10 +2307,28 @@ func (fptr *IFptr) GetParamDateTime(paramId int) time.Time {
 	return time.Date(int(year), time.Month(month), int(day), int(hour), int(minute), int(second), 0, time.Now().Location())
 }
 
+func (fptr *IFptr) IsParamAvailable(paramId int) bool {
+	res := C.bridge_libfptr_is_param_available_func(fptr.functions.libfptr_is_param_available, fptr.nativePointer, C.int(paramId))
+	if res > 0 {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (fptr *IFptr) LogWrite(tag string, level int, message string) error {
 	tg, _ := StringToWcharT(tag)
 	msg, _ := StringToWcharT(message)
-	err := C.bridge_libfptr_log_write_func(fptr.functions.libfptr_log_write, tg, C.int(level), msg)
+	err := C.bridge_libfptr_log_write_func(fptr.functions.libfptr_log_write, fptr.nativePointer, tg, C.int(level), msg)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) ChangeLabel(label string) error {
+	str, _ := StringToWcharT(label)
+	err := C.bridge_libfptr_change_label_func(fptr.functions.libfptr_change_label, fptr.nativePointer, str)
 	if err == 0 {
 		return nil
 	}
@@ -2782,6 +3448,226 @@ func (fptr *IFptr) ClearUniversalCountersCache() error {
 		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_clear_universal_counters_cache\" in library")}
 	}
 	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_clear_universal_counters_cache, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) DisableOfdChannel() error {
+	if fptr.functions.libfptr_disable_ofd_channel == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_disable_ofd_channel\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_disable_ofd_channel, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) EnableOfdChannel() error {
+	if fptr.functions.libfptr_enable_ofd_channel == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_enable_ofd_channel\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_enable_ofd_channel, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) ValidateJson() error {
+	if fptr.functions.libfptr_validate_json == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_validate_json\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_validate_json, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) ReflectionCall() error {
+	if fptr.functions.libfptr_reflection_call == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_reflection_call\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_reflection_call, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) GetRemoteServerInfo() error {
+	if fptr.functions.libfptr_get_remote_server_info == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_get_remote_server_info\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_get_remote_server_info, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) BeginMarkingCodeValidation() error {
+	if fptr.functions.libfptr_begin_marking_code_validation == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_begin_marking_code_validation\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_begin_marking_code_validation, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) CancelMarkingCodeValidation() error {
+	if fptr.functions.libfptr_cancel_marking_code_validation == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_cancel_marking_code_validation\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_cancel_marking_code_validation, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) GetMarkingCodeValidationStatus() error {
+	if fptr.functions.libfptr_get_marking_code_validation_status == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_get_marking_code_validation_status\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_get_marking_code_validation_status, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) AcceptMarkingCode() error {
+	if fptr.functions.libfptr_accept_marking_code == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_accept_marking_code\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_accept_marking_code, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) DeclineMarkingCode() error {
+	if fptr.functions.libfptr_decline_marking_code == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_decline_marking_code\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_decline_marking_code, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) UpdateFnmKeys() error {
+	if fptr.functions.libfptr_update_fnm_keys == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_update_fnm_keys\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_update_fnm_keys, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) WriteSalesNotice() error {
+	if fptr.functions.libfptr_write_sales_notice == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_write_sales_notice\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_write_sales_notice, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) CheckMarkingCodeValidationsReady() error {
+	if fptr.functions.libfptr_check_marking_code_validations_ready == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_check_marking_code_validations_ready\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_check_marking_code_validations_ready, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) ClearMarkingCodeValidationResult() error {
+	if fptr.functions.libfptr_clear_marking_code_validation_result == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_clear_marking_code_validation_result\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_clear_marking_code_validation_result, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) PingMarkingServer() error {
+	if fptr.functions.libfptr_ping_marking_server == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_ping_marking_server\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_ping_marking_server, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) GetMarkingServerStatus() error {
+	if fptr.functions.libfptr_get_marking_server_status == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_get_marking_server_status\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_get_marking_server_status, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) IsDriverLocked() error {
+	if fptr.functions.libfptr_is_driver_locked == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_is_driver_locked\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_is_driver_locked, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) GetLastDocumentJournal() error {
+	if fptr.functions.libfptr_get_last_document_journal == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_get_last_document_journal\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_get_last_document_journal, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) FindDocumentInJournal() error {
+	if fptr.functions.libfptr_find_document_in_journal == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_find_document_in_journal\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_find_document_in_journal, fptr.nativePointer)
+	if err == 0 {
+		return nil
+	}
+	return &Error{fptr.ErrorCode(), fptr.ErrorDescription()}
+}
+
+func (fptr *IFptr) RunFnCommand() error {
+	if fptr.functions.libfptr_run_fn_command == nil {
+		return &Error{LIBFPTR_ERROR_NOT_LOADED, fmt.Sprintf("Can`t find method \"libfptr_run_fn_command\" in library")}
+	}
+	err := C.bridge_libfptr_simple_func(fptr.functions.libfptr_run_fn_command, fptr.nativePointer)
 	if err == 0 {
 		return nil
 	}
