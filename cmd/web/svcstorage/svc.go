@@ -65,9 +65,9 @@ func newConfig(cfg *model.KasseConfig) (*device.Config, error) {
 	case "TAX_VAT120":
 		tax = fptr10.LIBFPTR_TAX_VAT120
 	case "TAX_VAT105":
-		tax = fptr10.LIBFPTR_TAX_VAT105
+		tax = fptr10.LIBFPTR_TAX_VAT5
 	case "TAX_VAT107":
-		tax = fptr10.LIBFPTR_TAX_VAT107
+		tax = fptr10.LIBFPTR_TAX_VAT7
 	default:
 		return nil, errors.New("unknown tax")
 	}

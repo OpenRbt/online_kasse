@@ -175,18 +175,26 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 
 	// Stage 8: Set the payment method
 	if data.Electronically > 0 {
+		fmt.Printf("payment electronically: %f", data.Electronically)
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_ELECTRONICALLY)
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Electronically)
 		fptr.Payment()
 	}
 	if data.Cash > 0 {
+		fmt.Printf("payment cash: %f", data.Cash)
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_TYPE, fptr10.LIBFPTR_PT_CASH)
 		fptr.SetParam(fptr10.LIBFPTR_PARAM_PAYMENT_SUM, data.Cash)
 		fptr.Payment()
 	}
 
 	// Stage 9: Close the receipt
-	_ = fptr.CloseReceipt()
+	log.Info("Close the receipt")
+	err = fptr.CloseReceipt()
+	if err != nil {
+		log.Info("Close the receipt err", "code", err, "Description", fptr.ErrorDescription())
+		return app.ErrReceiptCloseFailure
+	}
+
 	if err := fptr.CheckDocumentClosed(); err != nil {
 		log.Info("Close the receipt err", "code", err, "Description", fptr.ErrorDescription())
 		return app.ErrReceiptCloseFailure
@@ -234,6 +242,7 @@ func (dev *KaznacheyFA) PrintReceipt(data app.Receipt) error {
 // CloseShift sends Receipt to the Device driver
 // nolint
 func (dev *KaznacheyFA) CloseShift() error {
+	fmt.Println("close shift")
 	if dev == nil {
 		fmt.Println("can't print on nil device")
 		return app.ErrCannotConnect
@@ -318,7 +327,7 @@ func NewKaznacheyFA(mut *sync.Mutex, configSvc ConfigSvc) (*KaznacheyFA, error) 
 		panic(err)
 	}
 
-	fmt.Println("start cron")
+	fmt.Println("start cron. Timezone: %d", res.cfg.Timezone)
 	c.Start()
 	return res, nil
 }
